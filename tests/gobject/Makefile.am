@@ -46,42 +46,9 @@ if ENABLE_TIMELOOP
 installed_test_programs += timeloop-closure
 endif
 
-if CROSS_COMPILING
-  glib_genmarshal=$(GLIB_GENMARSHAL)
-else
-  glib_genmarshal=$(top_builddir)/gobject/glib-genmarshal
-endif
-
-testmarshal.h: stamp-testmarshal.h
-	@true
-stamp-testmarshal.h: @REBUILD@ testmarshal.list $(glib_genmarshal)
-	$(AM_V_GEN) $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --header >> xgen-gmh \
-	&& (cmp -s xgen-gmh testmarshal.h 2>/dev/null || cp xgen-gmh testmarshal.h) \
-	&& rm -f xgen-gmh xgen-gmh~ \
-	&& echo timestamp > $@
-testmarshal.c: @REBUILD@ testmarshal.h testmarshal.list $(glib_genmarshal)
-	$(AM_V_GEN) (echo "#include \"testmarshal.h\""; $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --body) >> xgen-gmc \
-	&& cp xgen-gmc testmarshal.c \
-	&& rm -f xgen-gmc xgen-gmc~
-
-BUILT_SOURCES += testmarshal.h testmarshal.c
-CLEANFILES += stamp-testmarshal.h
+GLIB_GENERATED += testmarshal.h testmarshal.c
+BUILT_SOURCES += $(GLIB_GENERATED)
+testmarshal_sources = $(accumulator_SOURCES) $(defaultiface_SOURCES) $(dynamictype_SOURCES)
 
 EXTRA_DIST += \
-	testcommon.h				\
-	testmarshal.list
-
-BUILT_EXTRA_DIST += \
-	testmarshal.h				\
-	testmarshal.c
-
-dist-hook: $(BUILT_EXTRA_DIST)
-	files='$(BUILT_EXTRA_DIST)';				\
-	for f in $$files; do					\
-	  if test -f $$f; then d=.; else d=$(srcdir); fi;	\
-	  cp $$d/$$f $(distdir) || exit 1; done
-
-distclean-local:
-	if test $(srcdir) = .; then :; else	\
-	    rm -f $(BUILT_EXTRA_DIST);		\
-	fi
+	testcommon.h

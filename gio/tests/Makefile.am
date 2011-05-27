@@ -1,4 +1,5 @@
 include $(top_srcdir)/glib.mk
+BUILT_SOURCES += $(GLIB_GENERATED)
 dist_uninstalled_test_data =
 test_ltlibraries =
 
@@ -411,7 +412,7 @@ nodist_resources_SOURCES = test2-resources.c test3-resources.c test3-resources.h
 resources_DEPENDENCIES = test.gresource
 
 test_ltlibraries += libresourceplugin.la
-libresourceplugin_la_SOURCES = resourceplugin.c plugin-resources.c
+libresourceplugin_la_SOURCES = resourceplugin.c test4-resources.c
 libresourceplugin_la_LDFLAGS = -avoid-version -module -export-dynamic $(no_undefined)
 libresourceplugin_la_LIBADD = $(LDADD)
 
@@ -434,18 +435,13 @@ endif
 
 resources.o: test3-resources.h
 
-test2-resources.c: test2.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test2.gresource.xml)
-	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate-source --c-name _g_test2 $<
+GLIB_GENERATED +=			\
+	test.gresource			\
+	test2-resources.c		\
+	test3-resources.c		\
+	test3-resources.h		\
+	test4-resources.c
 
-test3-resources.h test3-resources.c: test3.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test3.gresource.xml)
-	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate --c-name _g_test2 --manual-register $<
-
-plugin-resources.c: test4.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test4.gresource.xml)
-	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate-source --c-name _g_plugin $<
-
-test.gresource: test.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test.gresource.xml)
-	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) $<
-
-EXTRA_DIST += test.gresource.xml test1.txt test2.gresource.xml test2.txt test3.gresource.xml test3.txt test4.gresource.xml
-
-CLEANFILES += test2-resources.c test3-resources.[ch] plugin-resources.c test.gresource
+test2_resources_COMPILE_RESOURCES_FLAGS = --c-name _g_test2
+test3_resources_COMPILE_RESOURCES_FLAGS = --c-name _g_test3
+test4_resources_COMPILE_RESOURCES_FLAGS = --c-name _g_plugin
