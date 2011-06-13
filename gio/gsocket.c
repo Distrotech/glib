@@ -145,7 +145,8 @@ enum
   PROP_TTL,
   PROP_BROADCAST,
   PROP_MULTICAST_LOOPBACK,
-  PROP_MULTICAST_TTL
+  PROP_MULTICAST_TTL,
+  PROP_CONNECTED
 };
 
 /* Size of the receiver cache for g_socket_receive_from() */
@@ -656,6 +657,10 @@ g_socket_get_property (GObject    *object,
 	g_value_set_uint (value, g_socket_get_multicast_ttl (socket));
 	break;
 
+      case PROP_CONNECTED:
+	g_value_set_boolean (value, socket->priv->connected);
+	break;
+
       default:
 	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -945,6 +950,21 @@ g_socket_class_init (GSocketClass *klass)
 						      0, G_MAXUINT, 1,
 						      G_PARAM_READWRITE |
 						      G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GSocket:connected:
+   *
+   * Whether the socket is connected. See g_socket_is_connected().
+   *
+   * Since: 2.34
+   */
+  g_object_class_install_property (gobject_class, PROP_CONNECTED,
+				   g_param_spec_boolean ("connected",
+							 P_("Connected"),
+							 P_("Whether the socket is connected"),
+							 FALSE,
+							 G_PARAM_READABLE |
+							 G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -1776,8 +1796,18 @@ g_socket_get_remote_address (GSocket  *socket,
  * g_socket_is_connected:
  * @socket: a #GSocket.
  *
- * Check whether the socket is connected. This is only useful for
- * connection-oriented sockets.
+ * Check whether the socket is connected.
+ *
+ * A client socket becomes connected when g_socket_connect() or
+ * g_socket_check_connect_result() returns %TRUE. A server socket is
+ * connected when it is returned from g_socket_accept(). (Listening
+ * sockets are not considered connected.) The socket remains connected
+ * until either g_socket_close() or g_socket_shutdown() is called on
+ * it, or until some method notices that the remote end has
+ * disconnected.
+ *
+ * This is only useful for connection-oriented sockets; datagram
+ * sockets are always disconnected.
  *
  * Returns: %TRUE if socket is connected, %FALSE otherwise.
  *
@@ -2395,7 +2425,11 @@ g_socket_connect (GSocket         *socket,
 
   win32_unset_event_mask (socket, FD_CONNECT);
 
-  socket->priv->connected = TRUE;
+  if (!socket->priv->connected)
+    {
+      socket->priv->connected = TRUE;
+      g_object_notify (G_OBJECT (socket), "connected");
+    }
 
   return TRUE;
 }
@@ -2446,6 +2480,7 @@ g_socket_check_connect_result (GSocket  *socket,
     }
 
   socket->priv->connected = TRUE;
+  g_object_notify (G_OBJECT (socket), "connected");
   return TRUE;
 }
 
@@ -2639,6 +2674,11 @@ g_socket_receive_with_blocking (GSocket       *socket,
       break;
     }
 
+  if (ret == 0 && size != 0 && socket->priv->connected)
+    {
+      socket->priv->connected = FALSE;
+      g_object_notify (G_OBJECT (socket), "connected");
+    }
   return ret;
 }
 
@@ -2926,8 +2966,11 @@ g_socket_shutdown (GSocket   *socket,
       return FALSE;
     }
 
-  if (shutdown_read && shutdown_write)
-    socket->priv->connected = FALSE;
+  if (shutdown_read && shutdown_write && socket->priv->connected)
+    {
+      socket->priv->connected = FALSE;
+      g_object_notify (G_OBJECT (socket), "connected");
+    }
 
   return TRUE;
 }
@@ -2976,6 +3019,7 @@ g_socket_close (GSocket  *socket,
 		GError  **error)
 {
   int res;
+  gboolean was_connected;
 
   g_return_val_if_fail (G_IS_SOCKET (socket), TRUE);
 
@@ -3008,6 +3052,7 @@ g_socket_close (GSocket  *socket,
       break;
     }
 
+  was_connected = socket->priv->connected;
   socket->priv->connected = FALSE;
   socket->priv->closed = TRUE;
   if (socket->priv->remote_address)
@@ -3016,6 +3061,8 @@ g_socket_close (GSocket  *socket,
       socket->priv->remote_address = NULL;
     }
 
+  if (was_connected)
+    g_object_notify (G_OBJECT (socket), "connected");
   return TRUE;
 }
 
@@ -3023,7 +3070,9 @@ g_socket_close (GSocket  *socket,
  * g_socket_is_closed:
  * @socket: a #GSocket
  *
- * Checks whether a socket is closed.
+ * Checks whether a socket is closed. (That is, whether
+ * g_socket_close() has been called on it.) g_socket_is_connected()
+ * may be more useful, depending on what you need to know.
  *
  * Returns: %TRUE if socket is closed, %FALSE otherwise
  *
@@ -4132,6 +4181,7 @@ g_socket_receive_message (GSocket                 *socket,
 {
   GInputVector one_vector;
   char one_byte;
+  gssize result;
 
   g_return_val_if_fail (G_IS_SOCKET (socket), -1);
 
@@ -4163,7 +4213,6 @@ g_socket_receive_message (GSocket                 *socket,
 #ifndef G_OS_WIN32
   {
     struct msghdr msg;
-    gssize result;
     struct sockaddr_storage one_sockaddr;
 
     /* name */
@@ -4329,8 +4378,6 @@ g_socket_receive_message (GSocket                 *socket,
     /* capture the flags */
     if (flags != NULL)
       *flags = msg.msg_flags;
-
-    return result;
   }
 #else
   {
@@ -4414,9 +4461,26 @@ g_socket_receive_message (GSocket                 *socket,
     if (num_messages != NULL)
       *num_messages = 0;
 
-    return bytes_received;
+    result = bytes_received;
   }
 #endif
+
+  if (result == 0 && socket->priv->connected)
+    {
+      gint i;
+
+      /* If we tried to read at least 1 byte, then a 0 return means EOF. */
+      for (i = 0; i < num_vectors; i++)
+	{
+	  if (vectors[i].size > 0)
+	    {
+	      socket->priv->connected = FALSE;
+	      g_object_notify (G_OBJECT (socket), "connected");
+	      break;
+	    }
+	}
+    }
+  return result;
 }
 
 /**
