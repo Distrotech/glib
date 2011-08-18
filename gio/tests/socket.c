@@ -37,7 +37,19 @@ typedef struct {
   GSocketFamily family;
   GThread *thread;
   GMainLoop *loop;
+  gint client_connected_changed;
+  gint server_connected_changed;
 } IPTestData;
+
+static void
+connected_changed (GObject    *socket,
+		   GParamSpec *pspec,
+		   gpointer    user_data)
+{
+  gint *count = user_data;
+
+  (*count)++;
+}
 
 static gpointer
 echo_server_thread (gpointer user_data)
@@ -50,6 +62,12 @@ echo_server_thread (gpointer user_data)
 
   sock = g_socket_accept (data->server, NULL, &error);
   g_assert_no_error (error);
+  g_assert (g_socket_is_connected (sock));
+
+  data->server_connected_changed = 0;
+  g_signal_connect (sock, "notify::connected",
+		    G_CALLBACK (connected_changed),
+		    &data->server_connected_changed);
 
   while (TRUE)
     {
@@ -65,9 +83,16 @@ echo_server_thread (gpointer user_data)
       g_assert_cmpint (nwrote, ==, nread);
     }
 
+  g_assert (!g_socket_is_connected (sock));
+  g_assert (!g_socket_is_closed (sock));
+  g_assert_cmpint (data->server_connected_changed, ==, 1);
+
   g_socket_close (sock, &error);
   g_assert_no_error (error);
+  g_assert (!g_socket_is_connected (sock));
+  g_assert (g_socket_is_closed (sock));
   g_object_unref (sock);
+
   return NULL;
 }
 
@@ -94,6 +119,9 @@ create_server (GSocketFamily family,
   g_assert_cmpint (g_socket_get_family (server), ==, family);
   g_assert_cmpint (g_socket_get_socket_type (server), ==, G_SOCKET_TYPE_STREAM);
   g_assert_cmpint (g_socket_get_protocol (server), ==, G_SOCKET_PROTOCOL_DEFAULT);
+
+  g_assert (!g_socket_is_connected (server));
+  g_assert (!g_socket_is_closed (server));
 
   g_socket_set_blocking (server, TRUE);
 
@@ -233,6 +261,7 @@ test_ip_async_connected (GSocket      *client,
   g_assert_cmpint (cond, ==, G_IO_OUT);
 
   g_assert (g_socket_is_connected (client));
+  g_assert_cmpint (data->client_connected_changed, ==, 1);
 
   /* This adds 1 second to "make check", so let's just only do it once. */
   if (data->family == G_SOCKET_FAMILY_IPV4)
@@ -284,12 +313,20 @@ test_ip_async (GSocketFamily family)
   g_assert_no_error (error);
   data->client = client;
 
+  data->client_connected_changed = 0;
+  g_signal_connect (client, "notify::connected",
+		    G_CALLBACK (connected_changed),
+		    &data->client_connected_changed);
+
   g_assert_cmpint (g_socket_get_family (client), ==, family);
   g_assert_cmpint (g_socket_get_socket_type (client), ==, G_SOCKET_TYPE_STREAM);
   g_assert_cmpint (g_socket_get_protocol (client), ==, G_SOCKET_PROTOCOL_DEFAULT);
 
   g_socket_set_blocking (client, FALSE);
   g_socket_set_timeout (client, 1);
+
+  g_assert (!g_socket_is_connected (client));
+  g_assert (!g_socket_is_closed (client));
 
   if (g_socket_connect (client, addr, NULL, &error))
     {
@@ -317,14 +354,23 @@ test_ip_async (GSocketFamily family)
 
   g_thread_join (data->thread);
 
+  g_assert_cmpint (data->client_connected_changed, ==, 1);
   len = g_socket_receive (client, buf, sizeof (buf), NULL, &error);
   g_assert_no_error (error);
   g_assert_cmpint (len, ==, 0);
+  g_assert_cmpint (data->client_connected_changed, ==, 2);
+  g_assert (!g_socket_is_connected (client));
 
   g_socket_close (client, &error);
   g_assert_no_error (error);
+  g_assert_cmpint (data->client_connected_changed, ==, 2);
+  g_assert (!g_socket_is_connected (client));
+  g_assert (g_socket_is_closed (client));
+
   g_socket_close (data->server, &error);
   g_assert_no_error (error);
+  g_assert (!g_socket_is_connected (data->server));
+  g_assert (g_socket_is_closed (data->server));
 
   g_object_unref (data->server);
   g_object_unref (client);
@@ -370,6 +416,11 @@ test_ip_sync (GSocketFamily family)
 			 &error);
   g_assert_no_error (error);
 
+  data->client_connected_changed = 0;
+  g_signal_connect (client, "notify::connected",
+		    G_CALLBACK (connected_changed),
+		    &data->client_connected_changed);
+
   g_assert_cmpint (g_socket_get_family (client), ==, family);
   g_assert_cmpint (g_socket_get_socket_type (client), ==, G_SOCKET_TYPE_STREAM);
   g_assert_cmpint (g_socket_get_protocol (client), ==, G_SOCKET_PROTOCOL_DEFAULT);
@@ -377,9 +428,13 @@ test_ip_sync (GSocketFamily family)
   g_socket_set_blocking (client, TRUE);
   g_socket_set_timeout (client, 1);
 
+  g_assert (!g_socket_is_connected (client));
+  g_assert (!g_socket_is_closed (client));
+
   g_socket_connect (client, addr, NULL, &error);
   g_assert_no_error (error);
   g_assert (g_socket_is_connected (client));
+  g_assert_cmpint (data->client_connected_changed, ==, 1);
   g_object_unref (addr);
 
   /* This adds 1 second to "make check", so let's just only do it once. */
@@ -406,14 +461,23 @@ test_ip_sync (GSocketFamily family)
 
   g_thread_join (data->thread);
 
+  g_assert_cmpint (data->client_connected_changed, ==, 1);
   len = g_socket_receive (client, buf, sizeof (buf), NULL, &error);
   g_assert_no_error (error);
   g_assert_cmpint (len, ==, 0);
+  g_assert_cmpint (data->client_connected_changed, ==, 2);
+  g_assert (!g_socket_is_connected (client));
 
   g_socket_close (client, &error);
   g_assert_no_error (error);
+  g_assert_cmpint (data->client_connected_changed, ==, 2);
+  g_assert (!g_socket_is_connected (client));
+  g_assert (g_socket_is_closed (client));
+
   g_socket_close (data->server, &error);
   g_assert_no_error (error);
+  g_assert (!g_socket_is_connected (data->server));
+  g_assert (g_socket_is_closed (data->server));
 
   g_object_unref (data->server);
   g_object_unref (client);
