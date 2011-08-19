@@ -470,6 +470,7 @@ typedef enum {
  * @G_IO_ERROR_PROXY_NOT_ALLOWED: Proxy connection is not allowed by ruleset.
  *     Since 2.26
  * @G_IO_ERROR_BROKEN_PIPE: Broken pipe. Since 2.36
+ * @G_IO_ERROR_CONNECTION_CLOSED: Connection closed by peer. Since 2.36
  *
  * Error codes returned by GIO functions.
  *

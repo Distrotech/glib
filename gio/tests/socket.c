@@ -355,9 +355,20 @@ test_ip_async (GSocketFamily family)
   g_thread_join (data->thread);
 
   g_assert_cmpint (data->client_connected_changed, ==, 1);
-  len = g_socket_receive (client, buf, sizeof (buf), NULL, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (len, ==, 0);
+  if (family == G_SOCKET_FAMILY_IPV4)
+    {
+      len = g_socket_receive_with_blocking (client, buf, sizeof (buf),
+					    TRUE, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_cmpint (len, ==, 0);
+    }
+  else
+    {
+      len = g_socket_send_with_blocking (client, testbuf, strlen (testbuf) + 1,
+					 TRUE, NULL, &error);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+      g_assert_cmpint (len, ==, -1);
+    }
   g_assert_cmpint (data->client_connected_changed, ==, 2);
   g_assert (!g_socket_is_connected (client));
 
@@ -462,9 +473,24 @@ test_ip_sync (GSocketFamily family)
   g_thread_join (data->thread);
 
   g_assert_cmpint (data->client_connected_changed, ==, 1);
-  len = g_socket_receive (client, buf, sizeof (buf), NULL, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (len, ==, 0);
+  if (family == G_SOCKET_FAMILY_IPV4)
+    {
+      /* Test that reading on a remote-closed socket gets back
+       * 0 bytes and emits notify::connected.
+       */
+      len = g_socket_receive (client, buf, sizeof (buf), NULL, &error);
+      g_assert_no_error (error);
+      g_assert_cmpint (len, ==, 0);
+    }
+  else
+    {
+      /* Test that writing to a remote-closed socket gets back
+       * EPIPE and emits notify::connected.
+       */
+      len = g_socket_send (client, testbuf, strlen (testbuf) + 1, NULL, &error);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+      g_assert_cmpint (len, ==, -1);
+    }
   g_assert_cmpint (data->client_connected_changed, ==, 2);
   g_assert (!g_socket_is_connected (client));
 

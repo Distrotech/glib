@@ -209,7 +209,10 @@ socket_io_error_from_errno (int err)
 #ifdef G_OS_WIN32
   return g_io_error_from_win32_error (err);
 #else
-  return g_io_error_from_errno (err);
+  if (err == EPIPE)
+    return G_IO_ERROR_CONNECTION_CLOSED;
+  else
+    return g_io_error_from_errno (err);
 #endif
 }
 
@@ -2645,23 +2648,19 @@ g_socket_receive_with_blocking (GSocket       *socket,
       if ((ret = recv (socket->priv->fd, buffer, size, 0)) < 0)
 	{
 	  int errsv = get_socket_errno ();
+	  GIOErrorEnum gioerr;
 
 	  if (errsv == EINTR)
 	    continue;
 
-	  if (blocking)
-	    {
-#ifdef WSAEWOULDBLOCK
-	      if (errsv == WSAEWOULDBLOCK)
-		continue;
-#else
-	      if (errsv == EWOULDBLOCK ||
-		  errsv == EAGAIN)
-		continue;
-#endif
-	    }
+	  gioerr = socket_io_error_from_errno (errsv);
+	  if (blocking && gioerr == G_IO_ERROR_WOULD_BLOCK)
+	    continue;
 
 	  win32_unset_event_mask (socket, FD_READ);
+
+	  if (gioerr == G_IO_ERROR_CONNECTION_CLOSED)
+	    g_socket_set_connected (socket, FALSE);
 
 	  g_set_error (error, G_IO_ERROR,
 		       socket_io_error_from_errno (errsv),
@@ -2674,11 +2673,9 @@ g_socket_receive_with_blocking (GSocket       *socket,
       break;
     }
 
-  if (ret == 0 && size != 0 && socket->priv->connected)
-    {
-      socket->priv->connected = FALSE;
-      g_object_notify (G_OBJECT (socket), "connected");
-    }
+  if (ret == 0 && size != 0)
+    g_socket_set_connected (socket, FALSE);
+
   return ret;
 }
 
