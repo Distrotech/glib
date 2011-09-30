@@ -40,7 +40,7 @@ test_rec_mutex1 (void)
 static void
 test_rec_mutex2 (void)
 {
-  GRecMutex mutex = G_REC_MUTEX_INIT;
+  GRecMutex mutex = { };
 
   g_rec_mutex_lock (&mutex);
   g_rec_mutex_unlock (&mutex);
@@ -52,7 +52,7 @@ test_rec_mutex2 (void)
 static void
 test_rec_mutex3 (void)
 {
-  GRecMutex mutex = G_REC_MUTEX_INIT;
+  GRecMutex mutex = { };
   gboolean ret;
 
   ret = g_rec_mutex_trylock (&mutex);

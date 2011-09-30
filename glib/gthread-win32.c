@@ -178,14 +178,14 @@ g_rec_mutex_impl_free (CRITICAL_SECTION *cs)
 static CRITICAL_SECTION *
 g_rec_mutex_get_impl (GRecMutex *mutex)
 {
-  CRITICAL_SECTION *impl = mutex->impl;
+  CRITICAL_SECTION *impl = mutex->p;
 
-  if G_UNLIKELY (mutex->impl == NULL)
+  if G_UNLIKELY (impl == NULL)
     {
       impl = g_rec_mutex_impl_new ();
-      if (InterlockedCompareExchangePointer (&mutex->impl, impl, NULL) != NULL)
+      if (InterlockedCompareExchangePointer (&mutex->p, impl, NULL) != NULL)
         g_rec_mutex_impl_free (impl);
-      impl = mutex->impl;
+      impl = mutex->p;
     }
 
   return impl;
@@ -194,14 +194,14 @@ g_rec_mutex_get_impl (GRecMutex *mutex)
 void
 g_rec_mutex_init (GRecMutex *mutex)
 {
-  mutex->impl = g_rec_mutex_impl_new ();
+  mutex->p = g_rec_mutex_impl_new ();
 }
 
 void
 g_rec_mutex_clear (GRecMutex *mutex)
 {
-  if (mutex->impl)
-    g_rec_mutex_impl_free (mutex->impl);
+  if (mutex->p)
+    g_rec_mutex_impl_free (mutex->p);
 }
 
 void
@@ -213,7 +213,7 @@ g_rec_mutex_lock (GRecMutex *mutex)
 void
 g_rec_mutex_unlock (GRecMutex *mutex)
 {
-  LeaveCriticalSection (mutex->impl);
+  LeaveCriticalSection (mutex->p);
 }
 
 gboolean

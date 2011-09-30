@@ -30,71 +30,41 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GMutex          GMutex;
-typedef struct _GRecMutex       GRecMutex;
-typedef struct _GRWLock         GRWLock;
-typedef struct _GCond           GCond;
-typedef struct _GPrivate        GPrivate;
-
-#ifdef G_OS_WIN32
-
-#define G_MUTEX_INIT { NULL }
-struct _GMutex
+typedef union
 {
-  gpointer impl;
-};
+  /*< private >*/
+  gpointer p;
+  guint i[2];
+} GMutex;
 
-#define G_RW_LOCK_INIT { NULL }
-struct _GRWLock
+typedef union
 {
-  gpointer impl;
-};
+  /*< private >*/
+  gpointer p;
+  guint i[2];
+} GRWLock;
 
-#define G_COND_INIT { NULL }
-struct _GCond
+typedef union
 {
-  gpointer impl;
-};
-#else
+  /*< private >*/
+  gpointer p;
+  guint i[2];
+} GRecMutex;
 
-#include <pthread.h>
-
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-#define G_MUTEX_INIT { PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP }
-#else
-#define G_MUTEX_INIT { PTHREAD_MUTEX_INITIALIZER }
-#endif
-struct _GMutex
+typedef struct
 {
-  pthread_mutex_t impl;
-};
-
-#define G_RW_LOCK_INIT { PTHREAD_RWLOCK_INITIALIZER }
-struct _GRWLock
-{
-  pthread_rwlock_t impl;
-};
-
-#define G_COND_INIT { PTHREAD_COND_INITIALIZER }
-struct _GCond
-{
-  pthread_cond_t impl;
-};
-
-#endif
-
-#define G_REC_MUTEX_INIT { NULL }
-struct _GRecMutex
-{
-  gpointer impl;
-};
+  /*< private >*/
+  gpointer p;
+  guint i[2];
+} GCond;
 
 #define G_PRIVATE_INIT(notify) { NULL, (notify) }
-struct _GPrivate
+typedef struct
 {
+  /*< private >*/
   gpointer       p;
   GDestroyNotify notify;
-};
+} GPrivate;
 
 void            g_mutex_init                    (GMutex         *mutex);
 void            g_mutex_clear                   (GMutex         *mutex);

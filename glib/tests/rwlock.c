@@ -38,7 +38,7 @@ test_rwlock1 (void)
 static void
 test_rwlock2 (void)
 {
-  GRWLock lock = G_RW_LOCK_INIT;
+  GRWLock lock = { };
 
   g_rw_lock_writer_lock (&lock);
   g_rw_lock_writer_unlock (&lock);
@@ -50,7 +50,7 @@ test_rwlock2 (void)
 static void
 test_rwlock3 (void)
 {
-  GRWLock lock = G_RW_LOCK_INIT;
+  GRWLock lock = { };
   gboolean ret;
 
   ret = g_rw_lock_writer_trylock (&lock);
@@ -66,7 +66,7 @@ test_rwlock3 (void)
 static void
 test_rwlock4 (void)
 {
-  GRWLock lock = G_RW_LOCK_INIT;
+  GRWLock lock = { };
 
   g_rw_lock_reader_lock (&lock);
   g_rw_lock_reader_unlock (&lock);
@@ -78,7 +78,7 @@ test_rwlock4 (void)
 static void
 test_rwlock5 (void)
 {
-  GRWLock lock = G_RW_LOCK_INIT;
+  GRWLock lock = { };
   gboolean ret;
 
   ret = g_rw_lock_reader_trylock (&lock);
@@ -95,7 +95,7 @@ test_rwlock5 (void)
 static void
 test_rwlock6 (void)
 {
-  GRWLock lock = G_RW_LOCK_INIT;
+  GRWLock lock = { };
   gboolean ret;
 
   g_rw_lock_writer_lock (&lock);

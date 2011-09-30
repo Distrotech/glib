@@ -655,9 +655,9 @@ struct  _GRealThread
 
 gboolean         g_threads_got_initialized = FALSE;
 GSystemThread    zero_thread; /* This is initialized to all zero */
-GMutex           g_once_mutex = G_MUTEX_INIT;
+GMutex           g_once_mutex;
 
-static GCond     g_once_cond = G_COND_INIT;
+static GCond     g_once_cond;
 static void g_thread_cleanup (gpointer data);
 static GPrivate  g_thread_specific_private = G_PRIVATE_INIT (g_thread_cleanup);
 static GRealThread *g_thread_all_threads = NULL;

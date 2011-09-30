@@ -144,7 +144,7 @@ g_once_init_enter (volatile gsize *value_location)
 #define G_LOCK_NAME(name)               g__ ## name ## _lock
 #define G_LOCK_DEFINE_STATIC(name)    static G_LOCK_DEFINE (name)
 #define G_LOCK_DEFINE(name)           \
-  GMutex G_LOCK_NAME (name) = G_MUTEX_INIT
+  GMutex G_LOCK_NAME (name)
 #define G_LOCK_EXTERN(name)           extern GMutex G_LOCK_NAME (name)
 
 #ifdef G_DEBUG_LOCKS
