@@ -89,6 +89,13 @@ struct _GRecMutex
   gpointer impl;
 };
 
+#define G_PRIVATE_INIT(notify) { NULL, (notify) }
+struct _GPrivate
+{
+  gpointer       p;
+  GDestroyNotify notify;
+};
+
 void            g_mutex_init                    (GMutex         *mutex);
 void            g_mutex_clear                   (GMutex         *mutex);
 

@@ -43,7 +43,6 @@
 #include "gthread.h"
 #include "gthreadprivate.h"
 #include "deprecated/gthread.h"
-#include "gmutexprivate.h"
 #include "gslice.h"
 #include "gmain.h"
 
@@ -659,7 +658,8 @@ GSystemThread    zero_thread; /* This is initialized to all zero */
 GMutex           g_once_mutex = G_MUTEX_INIT;
 
 static GCond     g_once_cond = G_COND_INIT;
-static GPrivate  g_thread_specific_private;
+static void g_thread_cleanup (gpointer data);
+static GPrivate  g_thread_specific_private = G_PRIVATE_INIT (g_thread_cleanup);
 static GRealThread *g_thread_all_threads = NULL;
 static GSList   *g_thread_free_indices = NULL;
 static GSList*   g_once_init_list = NULL;
@@ -694,8 +694,6 @@ G_LOCK_DEFINE_STATIC (g_thread);
  * having to link with the thread libraries.</para></note>
  */
 
-static void g_thread_cleanup (gpointer data);
-
 void
 g_thread_init_glib (void)
 {
@@ -714,7 +712,6 @@ g_thread_init_glib (void)
 
   /* setup the basic threading system */
   g_threads_got_initialized = TRUE;
-  g_private_init (&g_thread_specific_private, g_thread_cleanup);
   g_private_set (&g_thread_specific_private, main_thread);
   g_system_thread_self (&main_thread->system_thread);
 
@@ -1630,10 +1627,11 @@ g_cond_free (GCond *cond)
 GPrivate *
 g_private_new (GDestroyNotify notify)
 {
+  GPrivate tmp = G_PRIVATE_INIT (notify);
   GPrivate *key;
 
   key = g_slice_new (GPrivate);
-  g_private_init (key, notify);
+  *key = tmp;
 
   return key;
 }

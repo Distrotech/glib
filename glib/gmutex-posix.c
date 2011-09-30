@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-#include "gmutexprivate.h"
+#include "gmutex.h"
 
 #include "gatomic.h"
 
@@ -732,13 +732,49 @@ g_cond_timedwait (GCond  *cond,
 }
 
 /* {{{1 GPrivate */
-
-void
-g_private_init (GPrivate       *key,
-                GDestroyNotify  notify)
+static pthread_key_t *
+g_private_impl_new (GDestroyNotify notify)
 {
-  pthread_key_create (&key->key, notify);
-  key->ready = TRUE;
+  pthread_key_t *key;
+  gint status;
+
+  key = malloc (sizeof (pthread_key_t));
+  if G_UNLIKELY (key == NULL)
+    g_mutex_abort (errno, "malloc");
+  status = pthread_key_create (key, notify);
+  if G_UNLIKELY (status != 0)
+    g_mutex_abort (status, "pthread_key_create");
+
+  return key;
+}
+
+static void
+g_private_impl_free (pthread_key_t *key)
+{
+  gint status;
+
+  status = pthread_key_delete (*key);
+  if G_UNLIKELY (status != 0)
+    g_mutex_abort (status, "pthread_key_delete");
+  free (key);
+}
+
+static pthread_key_t *
+g_private_get_impl (GPrivate *key)
+{
+  pthread_key_t *impl = key->p;
+
+  if G_UNLIKELY (impl == NULL)
+    {
+      impl = g_private_impl_new (key->notify);
+      if (!g_atomic_pointer_compare_and_exchange (&key->p, NULL, impl))
+        {
+          g_private_impl_free (impl);
+          impl = key->p;
+        }
+    }
+
+  return impl;
 }
 
 /**
@@ -763,11 +799,8 @@ g_private_init (GPrivate       *key,
 gpointer
 g_private_get (GPrivate *key)
 {
-  if (!key->ready)
-    return key->single_value;
-
   /* quote POSIX: No errors are returned from pthread_getspecific(). */
-  return pthread_getspecific (key->key);
+  return pthread_getspecific (*g_private_get_impl (key));
 }
 
 /**
@@ -787,13 +820,7 @@ g_private_set (GPrivate *key,
 {
   gint status;
 
-  if (!key->ready)
-    {
-      key->single_value = value;
-      return;
-    }
-
-  if G_UNLIKELY ((status = pthread_setspecific (key->key, value)) != 0)
+  if G_UNLIKELY ((status = pthread_setspecific (*g_private_get_impl (key), value)) != 0)
     g_mutex_abort (status, "pthread_setspecific");
 }
 /* {{{1 Epilogue */
