@@ -27,6 +27,7 @@
 #include <glib/gpoll.h>
 #include <glib/gslist.h>
 #include <glib/gthread.h>
+#include <glib/gmutex.h>
 
 G_BEGIN_DECLS
 

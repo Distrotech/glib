@@ -221,7 +221,7 @@ endif
 if OS_WIN32
 libglib_2_0_la_SOURCES += gthread-win32.c
 else
-libglib_2_0_la_SOURCES += gthread-posix.c
+libglib_2_0_la_SOURCES += gthread-posix.c gmutex-posix.c
 endif
 
 EXTRA_libglib_2_0_la_SOURCES = \
@@ -278,6 +278,7 @@ glibsubinclude_HEADERS =   \
 	gmarkup.h	\
 	gmem.h		\
 	gmessages.h	\
+	gmutex.h	\
 	gnode.h		\
 	goption.h	\
 	gpattern.h	\

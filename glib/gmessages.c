@@ -67,7 +67,7 @@
 #include "gprintfint.h"
 #include "gtestutils.h"
 #include "gthread.h"
-#include "gthreadprivate.h"
+#include "gmutexprivate.h"
 #include "gstrfuncs.h"
 #include "gstring.h"
 

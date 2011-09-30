@@ -34,6 +34,7 @@
 #include <glib/gerror.h>
 #include <glib/gutils.h>        /* for G_INLINE_FUNC */
 #include <glib/gatomic.h>       /* for g_atomic_pointer_get */
+#include <glib/gmutex.h>
 
 G_BEGIN_DECLS
 
@@ -51,66 +52,7 @@ typedef enum
 typedef gpointer (*GThreadFunc) (gpointer data);
 
 typedef struct _GThread         GThread;
-
-typedef struct _GMutex          GMutex;
-typedef struct _GRecMutex       GRecMutex;
-typedef struct _GRWLock         GRWLock;
-typedef struct _GCond           GCond;
-typedef struct _GPrivate        GPrivate;
 typedef struct _GStaticPrivate  GStaticPrivate;
-
-#ifdef G_OS_WIN32
-
-#define G_MUTEX_INIT { NULL }
-struct _GMutex
-{
-  gpointer impl;
-};
-
-#define G_RW_LOCK_INIT { NULL }
-struct _GRWLock
-{
-  gpointer impl;
-};
-
-#define G_COND_INIT { NULL }
-struct _GCond
-{
-  gpointer impl;
-};
-#else
-
-#include <pthread.h>
-
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-#define G_MUTEX_INIT { PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP }
-#else
-#define G_MUTEX_INIT { PTHREAD_MUTEX_INITIALIZER }
-#endif
-struct _GMutex
-{
-  pthread_mutex_t impl;
-};
-
-#define G_RW_LOCK_INIT { PTHREAD_RWLOCK_INITIALIZER }
-struct _GRWLock
-{
-  pthread_rwlock_t impl;
-};
-
-#define G_COND_INIT { PTHREAD_COND_INITIALIZER }
-struct _GCond
-{
-  pthread_cond_t impl;
-};
-
-#endif
-
-#define G_REC_MUTEX_INIT { NULL }
-struct _GRecMutex
-{
-  gpointer impl;
-};
 
 void     g_thread_init   (gpointer vtable);
 
@@ -123,8 +65,6 @@ GLIB_VAR gboolean g_threads_got_initialized;
 #else
 #define g_thread_supported()    (g_threads_got_initialized)
 #endif
-
-GMutex* g_static_mutex_get_mutex_impl   (GMutex **mutex);
 
 GThread *g_thread_create                 (GThreadFunc   func,
                                           gpointer      data,
@@ -233,51 +173,13 @@ g_once_init_enter (volatile gsize *value_location)
 #  define G_TRYLOCK(name) g_mutex_trylock (&G_LOCK_NAME (name))
 #endif /* !G_DEBUG_LOCKS */
 
-
 GMutex *                g_mutex_new                                     (void);
 void                    g_mutex_free                                    (GMutex         *mutex);
-void                    g_mutex_init                                    (GMutex         *mutex);
-void                    g_mutex_clear                                   (GMutex         *mutex);
-
-void                    g_mutex_lock                                    (GMutex         *mutex);
-void                    g_mutex_unlock                                  (GMutex         *mutex);
-gboolean                g_mutex_trylock                                 (GMutex         *mutex);
-
-void                    g_rw_lock_init                                  (GRWLock        *lock);
-void                    g_rw_lock_clear                                 (GRWLock        *lock);
-void                    g_rw_lock_writer_lock                           (GRWLock        *lock);
-gboolean                g_rw_lock_writer_trylock                        (GRWLock        *lock);
-void                    g_rw_lock_writer_unlock                         (GRWLock        *lock);
-void                    g_rw_lock_reader_lock                           (GRWLock        *lock);
-gboolean                g_rw_lock_reader_trylock                        (GRWLock        *lock);
-void                    g_rw_lock_reader_unlock                         (GRWLock        *lock);
-
-void                    g_rec_mutex_init                                (GRecMutex      *rec_mutex);
-void                    g_rec_mutex_clear                               (GRecMutex      *rec_mutex);
-void                    g_rec_mutex_lock                                (GRecMutex      *rec_mutex);
-gboolean                g_rec_mutex_trylock                             (GRecMutex      *rec_mutex);
-void                    g_rec_mutex_unlock                              (GRecMutex      *rec_mutex);
 
 GCond *                 g_cond_new                                      (void);
 void                    g_cond_free                                     (GCond          *cond);
-void                    g_cond_init                                     (GCond          *cond);
-void                    g_cond_clear                                    (GCond          *cond);
-
-void                    g_cond_wait                                     (GCond          *cond,
-                                                                         GMutex         *mutex);
-void                    g_cond_signal                                   (GCond          *cond);
-void                    g_cond_broadcast                                (GCond          *cond);
-gboolean                g_cond_timed_wait                               (GCond          *cond,
-                                                                         GMutex         *mutex,
-                                                                         GTimeVal       *timeval);
-gboolean                g_cond_timedwait                                (GCond          *cond,
-                                                                         GMutex         *mutex,
-                                                                         gint64          abs_time);
 
 GPrivate *              g_private_new                                   (GDestroyNotify  notify);
-gpointer                g_private_get                                   (GPrivate       *key);
-void                    g_private_set                                   (GPrivate       *key,
-                                                                         gpointer        value);
 
 G_END_DECLS
 

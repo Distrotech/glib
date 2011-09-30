@@ -31,7 +31,7 @@
 #ifndef __G_ASYNCQUEUE_H__
 #define __G_ASYNCQUEUE_H__
 
-#include <glib/gthread.h>
+#include <glib/gmutex.h>
 
 G_BEGIN_DECLS
 

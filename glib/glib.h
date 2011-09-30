@@ -59,6 +59,7 @@
 #include <glib/gmarkup.h>
 #include <glib/gmem.h>
 #include <glib/gmessages.h>
+#include <glib/gmutex.h>
 #include <glib/gnode.h>
 #include <glib/goption.h>
 #include <glib/gpattern.h>

@@ -34,7 +34,6 @@
 #include "gtestutils.h"
 #include "gthread.h"
 
-
 /**
  * SECTION:async_queues
  * @title: Asynchronous Queues

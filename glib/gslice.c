@@ -50,7 +50,7 @@
 #include "gutils.h"
 #include "gtestutils.h"
 #include "gthread.h"
-#include "gthreadprivate.h"
+#include "gmutexprivate.h"
 #include "glib_trace.h"
 #include "glib-ctor.h"
 

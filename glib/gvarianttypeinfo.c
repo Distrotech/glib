@@ -25,7 +25,8 @@
 #include "gvarianttypeinfo.h"
 
 #include <glib/gtestutils.h>
-#include <glib/gthread.h>
+#include <glib/gatomic.h>
+#include <glib/gmutex.h>
 #include <glib/gslice.h>
 #include <glib/ghash.h>
 
