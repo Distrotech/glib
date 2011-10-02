@@ -110,6 +110,7 @@ g_mutex_trylock (GMutex *mutex)
 void
 g_rec_mutex_init (GRecMutex *rec_mutex)
 {
+  rec_mutex->p = NULL;
   rec_mutex->i[0] = 0;
   rec_mutex->i[1] = 0;
 }
@@ -119,54 +120,82 @@ g_rec_mutex_clear (GRecMutex *rec_mutex)
 {
 }
 
-static pid_t
-gettid (void)
+static void __attribute__((noinline))
+g_rec_mutex_lock_slowpath (GRecMutex *rec_mutex)
 {
-  return pthread_self ();
+  gulong tid = pthread_self ();
+  gulong value;
+
+start_over:
+  value = (gulong) g_atomic_pointer_get (&rec_mutex->p);
+
+  if (value == 0)
+    goto try_to_acquire;
+
+mark_contended:
+  if (value & 1)
+    goto wait;
+
+  if (!__sync_bool_compare_and_swap (&rec_mutex->p, value, value | 1))
+    goto start_over;
+  value |= 1;
+
+wait:
+  syscall (__NR_futex, &rec_mutex->p, (gsize) FUTEX_WAIT, (gsize) (guint) value, NULL);
+
+try_to_acquire:
+  value = (gulong) __sync_val_compare_and_swap (&rec_mutex->p, 0, tid | 1);
+  if (value != 0)
+    goto mark_contended;
+
+  rec_mutex->i[0] = 1;
 }
 
 void
 g_rec_mutex_lock (GRecMutex *rec_mutex)
 {
-  pid_t tid = gettid ();
+  gulong tid = pthread_self ();
+  gulong prev;
 
-  while (!g_atomic_int_compare_and_exchange (rec_mutex->i, 0, tid))
+  prev = (gulong) __sync_val_compare_and_swap (&rec_mutex->p, 0, tid);
+
+  if G_LIKELY (prev == 0 || (prev & ~1ul) == tid)
     {
-      guint existing = g_atomic_int_get (&rec_mutex->i[0]);
-
-      if (existing == tid)
-        {
-          g_atomic_int_inc (&rec_mutex->i[1]);
-          return;
-        }
-
-      syscall (__NR_futex, rec_mutex->i, (gsize) FUTEX_WAIT, (gsize) existing, NULL);
+      rec_mutex->i[0]++;
+      return;
     }
+
+  g_rec_mutex_lock_slowpath (rec_mutex);
 }
 
 void
 g_rec_mutex_unlock (GRecMutex *rec_mutex)
 {
-  if (rec_mutex->i[1] == 0)
+  if (--rec_mutex->i[0] == 0)
     {
-      g_atomic_int_set (rec_mutex->i, 0);
-      //syscall (__NR_futex, rec_mutex->i, (gsize) FUTEX_WAKE, (gsize) 1, NULL);
+      gulong tid;
+
+      tid = (gulong) rec_mutex->p;
+      g_atomic_pointer_set (&rec_mutex->p, NULL);
+
+      if G_LIKELY (~tid & 1)
+        return;
+
+      syscall (__NR_futex, &rec_mutex->p, (gsize) FUTEX_WAKE, (gsize) 1, NULL);
     }
-  else
-    rec_mutex->i[1]--;
 }
 
 gboolean
 g_rec_mutex_trylock (GRecMutex *rec_mutex)
 {
-  pid_t tid = gettid ();
+  gulong tid = pthread_self ();
+  gulong prev;
 
-  if (g_atomic_int_compare_and_exchange (rec_mutex->i, 0, tid))
-    return TRUE;
+  prev = (gulong) __sync_val_compare_and_swap (&rec_mutex->p, 0, tid);
 
-  if (rec_mutex->i[0] == tid)
+  if G_LIKELY (prev == 0 || (prev & ~1ul) == tid)
     {
-      rec_mutex->i[1]++;
+      rec_mutex->i[0]++;
       return TRUE;
     }
 

@@ -44,7 +44,7 @@ typedef union
   guint i[2];
 } GRWLock;
 
-typedef union
+typedef struct
 {
   /*< private >*/
   gpointer p;
