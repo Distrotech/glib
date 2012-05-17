@@ -45,6 +45,7 @@ TEST_PROGS +=	 		\
 	srvtarget		\
 	contexts		\
 	gsettings		\
+	gsubprocess		\
 	gschema-compile		\
 	async-close-output-stream \
 	gdbus-addresses		\
@@ -263,6 +264,13 @@ contexts_LDADD		  = $(progs_ldadd) \
 
 gsettings_SOURCES	  = gsettings.c
 gsettings_LDADD		  = $(progs_ldadd)
+
+gsubprocess_SOURCES	  = gsubprocess.c
+gsubprocess_LDADD	  = $(progs_ldadd)
+
+noinst_PROGRAMS += gsubprocess-testprog
+gsubprocess_testprog_SOURCES  = gsubprocess-testprog.c
+gsubprocess_testprog_LDADD = $(progs_ldadd)
 
 gschema_compile_SOURCES	  = gschema-compile.c
 gschema_compile_LDADD	  = $(progs_ldadd)

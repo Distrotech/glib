@@ -255,6 +255,8 @@ GType   g_source_get_type          (void) G_GNUC_CONST;
 GLIB_DEPRECATED_FOR('G_TYPE_VARIANT')
 GType   g_variant_get_gtype        (void) G_GNUC_CONST;
 
+GType   g_spawn_flags_get_type     (void) G_GNUC_CONST;
+
 /**
  * GStrv:
  *

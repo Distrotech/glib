@@ -3904,3 +3904,55 @@ g_test_dbus_unset
 g_test_dbus_get_type
 g_test_dbus_flags_get_type
 </SECTION>
+
+<SECTION>
+<FILE>gsubprocess</FILE>
+<TITLE>GSubprocess</TITLE>
+GSubprocess
+g_subprocess_new
+g_subprocess_new_with_args
+<SUBSECTION Environment>
+g_subprocess_append_arg
+g_subprocess_append_args
+g_subprocess_append_args_va
+g_subprocess_set_argv
+g_subprocess_set_argv0
+g_subprocess_set_child_setup
+g_subprocess_set_detached
+g_subprocess_setenv
+g_subprocess_unsetenv
+g_subprocess_set_environment
+g_subprocess_set_leave_descriptors_open
+g_subprocess_set_use_search_path
+g_subprocess_set_use_search_path_from_envp
+g_subprocess_set_standard_error_to_devnull
+g_subprocess_set_standard_error_to_stdout
+g_subprocess_set_standard_error_unix_fd
+g_subprocess_set_standard_input_inherit
+g_subprocess_set_standard_input_unix_fd
+g_subprocess_set_standard_output_to_devnull
+g_subprocess_set_standard_output_unix_fd
+g_subprocess_set_working_directory
+<SUBSECTION Running>
+g_subprocess_start_with_pipes
+g_subprocess_start
+g_subprocess_add_watch
+g_subprocess_create_source
+g_subprocess_run_sync
+g_subprocess_wait_sync
+g_subprocess_request_exit
+g_subprocess_force_exit
+<SUBSECTION Status>
+g_subprocess_get_exit_status
+g_subprocess_get_pid
+g_subprocess_check_exit_status
+<SUBSECTION Utilities>
+g_subprocess_run_sync_get_output_bytes
+g_subprocess_run_sync_get_stdout_utf8
+<SUBSECTION Standard>
+G_IS_SUBPROCESS
+G_TYPE_SUBPROCESS
+G_SUBPROCESS
+<SUBSECTION Private>
+g_subprocess_get_type
+</SECTION>

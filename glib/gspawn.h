@@ -181,6 +181,7 @@ typedef enum
   G_SPAWN_CHILD_INHERITS_STDIN   = 1 << 5,
   G_SPAWN_FILE_AND_ARGV_ZERO     = 1 << 6,
   G_SPAWN_SEARCH_PATH_FROM_ENVP  = 1 << 7
+  /* Note if you add a value here, update gobject/genums.c too */
 } GSpawnFlags;
 
 GQuark g_spawn_error_quark (void);

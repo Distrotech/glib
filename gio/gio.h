@@ -122,6 +122,7 @@
 #include <gio/gsocketlistener.h>
 #include <gio/gsocketservice.h>
 #include <gio/gsrvtarget.h>
+#include <gio/gsubprocess.h>
 #include <gio/gtcpconnection.h>
 #include <gio/gtcpwrapperconnection.h>
 #include <gio/gtestdbus.h>

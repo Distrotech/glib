@@ -135,6 +135,7 @@ typedef struct _GIOStream                     GIOStream;
 typedef struct _GPollableInputStream          GPollableInputStream; /* Dummy typedef */
 typedef struct _GPollableOutputStream         GPollableOutputStream; /* Dummy typedef */
 typedef struct _GResolver                     GResolver;
+
 /**
  * GResource:
  *
@@ -466,6 +467,15 @@ typedef GType (*GDBusProxyTypeFunc) (GDBusObjectManagerClient   *manager,
                                      gpointer                    user_data);
 
 typedef struct _GTestDBus GTestDBus;
+
+/**
+ * GSubprocess:
+ *
+ * A child process.
+ *
+ * Since: 2.34
+ */
+typedef struct _GSubprocess                   GSubprocess;
 
 G_END_DECLS
 
