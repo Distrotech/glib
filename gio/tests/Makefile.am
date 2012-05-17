@@ -33,6 +33,7 @@ test_programs = \
 	g-icon					\
 	gdbus-addresses				\
 	gdbus-message				\
+	gsubprocess				\
 	inet-address				\
 	io-stream				\
 	memory-input-stream			\
@@ -94,6 +95,7 @@ uninstalled_test_extra_programs = \
 test_extra_programs = \
 	gdbus-connection-flush-helper		\
 	gdbus-testserver			\
+	gsubprocess-testprog			\
 	$(NULL)
 
 dist_uninstalled_test_data += $(addprefix schema-tests/,$(schema_tests))
