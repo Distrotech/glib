@@ -67,6 +67,8 @@ gdbus-test-codegen-generated*
 gdbus-test-fixture
 gdbus-testserver
 gdbus-threading
+gsubprocess
+gsubprocess-testprog
 g-file
 g-file-info
 g-icon
