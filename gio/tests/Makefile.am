@@ -45,6 +45,7 @@ TEST_PROGS +=	 		\
 	srvtarget		\
 	contexts		\
 	gsettings		\
+	gsubprocess		\
 	gschema-compile		\
 	async-close-output-stream \
 	gdbus-addresses		\
@@ -180,6 +181,8 @@ send_data_LDADD		  = $(LDADD) \
 
 contexts_LDADD		  = $(LDADD) \
 	$(top_builddir)/gthread/libgthread-2.0.la
+
+noinst_PROGRAMS += gsubprocess-testprog
 
 gdbus_daemon_SOURCES = gdbus-daemon.c $(top_srcdir)/gio/gdbusdaemon.c $(top_builddir)/gio/gdbus-daemon-generated.c
 

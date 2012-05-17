@@ -427,6 +427,9 @@ libgio_2_0_la_SOURCES =		\
 	gsocketlistener.c	\
 	gsocketoutputstream.c	\
 	gsocketoutputstream.h	\
+	gsubprocess.c		\
+	gsubprocesscontext.c	\
+	gsubprocesscontext-private.h	\
 	gproxy.c		\
 	gproxyaddress.c         \
 	gproxyaddressenumerator.c \
@@ -603,6 +606,8 @@ gio_headers =			\
 	gsocketservice.h	\
 	gsrvtarget.h		\
 	gtask.h			\
+	gsubprocess.h		\
+	gsubprocesscontext.h	\
 	gtcpconnection.h	\
 	gtcpwrapperconnection.h \
 	gthreadedsocketservice.h\
