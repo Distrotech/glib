@@ -23,10 +23,18 @@
 #include <glib.h>
 #include "gwakeup.h"
 
+typedef enum {
+  _G_CHILD_WATCH_FLAGS_NONE = 0,
+  _G_CHILD_WATCH_FLAGS_WNOWAIT = (1 << 0)
+} _GChildWatchFlags;
+
 G_GNUC_INTERNAL
 GMainContext *          g_get_worker_context            (void);
 G_GNUC_INTERNAL
 gboolean                g_check_setuid                  (void);
+G_GNUC_INTERNAL
+GSource *               g_child_watch_source_new_with_flags (GPid pid,
+							     gint flags);
 
 #define GLIB_PRIVATE_CALL(symbol) (glib__private__()->symbol)
 
@@ -44,6 +52,8 @@ typedef struct {
   /* Add other private functions here, initialize them in glib-private.c */
 
   gboolean              (* g_check_setuid)              (void);
+  GSource *             (* g_child_watch_source_new_with_flags) (GPid pid,
+								 gint flags);
 } GLibPrivateVTable;
 
 GLibPrivateVTable *glib__private__ (void);

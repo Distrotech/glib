@@ -40,7 +40,9 @@ glib__private__ (void)
 
     g_get_worker_context,
 
-    g_check_setuid
+    g_check_setuid,
+
+    g_child_watch_source_new_with_flags
   };
 
   return &table;
