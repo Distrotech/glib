@@ -38,7 +38,8 @@ glib__private__ (void)
     g_wakeup_signal,
     g_wakeup_acknowledge,
 
-    g_get_worker_context
+    g_get_worker_context,
+    g_child_watch_source_new_with_flags
   };
 
   return &table;

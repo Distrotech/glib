@@ -292,7 +292,9 @@ struct _GChildWatchSource
 #ifdef G_OS_WIN32
   GPollFD     poll;
 #else /* G_OS_WIN32 */
-  gboolean    child_exited;
+  guint       child_exited : 1;
+  guint       wnowait : 1;
+  guint       reserved : 30;
 #endif /* G_OS_WIN32 */
 };
 
@@ -4375,6 +4377,62 @@ wake_source (GSource *source)
   G_UNLOCK(main_context_list);
 }
 
+/* This is a hack; we want to use the newer waitid() call, but the use
+ * of the waitpid() status code API is baked into the GChildWatchSource
+ * callback signature, so we need to synthesize it from the siginfo_t
+ * we get from waitid().
+ */ 
+#ifdef HAVE_WAITID
+#define __G_MAKE_EXITSTATUS(ecode, signum) ((ecode) << 8 | (signum))
+static gint
+waitpid_status_from_siginfo (siginfo_t *siginfo)
+{
+  G_STATIC_ASSERT(((WIFEXITED (__G_MAKE_EXITSTATUS (1, 0))) &&		\
+		   !(WIFSIGNALED (__G_MAKE_EXITSTATUS (1, 0))) &&	\
+		   (WEXITSTATUS (__G_MAKE_EXITSTATUS (1, 0)) == 1)));
+  G_STATIC_ASSERT((!WIFEXITED (__G_MAKE_EXITSTATUS (0, 1))) &&		\
+		  (WIFSIGNALED (__G_MAKE_EXITSTATUS (0, 1))) &&		\
+		  (WTERMSIG (__G_MAKE_EXITSTATUS (0, 1)) == 1));
+  if (siginfo->si_code == CLD_EXITED)
+    return __G_MAKE_EXITSTATUS(siginfo->si_status, 0);
+ else if (siginfo->si_code == CLD_KILLED || siginfo->si_code == CLD_DUMPED)
+   return __G_MAKE_EXITSTATUS(0, siginfo->si_status);
+ else
+   return __G_MAKE_EXITSTATUS(0xFF, 0);
+}
+#undef __G_MAKE_EXITSTATUS
+#endif /* HAVE_WAITID */
+
+/* Returns TRUE if we need to wake the source */
+static gboolean
+unix_child_watch_source_waitpid (GChildWatchSource    *source)
+{
+  if (source->child_exited)
+    return FALSE;
+
+#ifdef HAVE_WAITID
+  if (source->wnowait)
+    {
+      siginfo_t siginfo;
+      siginfo.si_pid = 0;
+      if (waitid (P_PID, (id_t)source->pid, &siginfo, WEXITED | WNOHANG | WNOWAIT) == 0
+	  && siginfo.si_pid == source->pid)
+	{
+	  source->child_exited = TRUE;
+	  source->child_status = waitpid_status_from_siginfo (&siginfo);
+	  return TRUE;
+	}
+    } else 
+#endif
+  if (waitpid (source->pid, &source->child_status, WNOHANG) > 0)
+    {
+      source->child_exited = TRUE;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 static void
 dispatch_unix_signals (void)
 {
@@ -4401,16 +4459,9 @@ dispatch_unix_signals (void)
       for (node = unix_child_watches; node; node = node->next)
         {
           GChildWatchSource *source = node->data;
-
-          if (!source->child_exited)
-            {
-              if (waitpid (source->pid, &source->child_status, WNOHANG) > 0)
-                {
-                  source->child_exited = TRUE;
-
-                  wake_source ((GSource *) source);
-                }
-            }
+	  
+	  if (unix_child_watch_source_waitpid (source))
+	    wake_source ((GSource *) source);
         }
     }
 
@@ -4601,6 +4652,43 @@ g_unix_signal_handler (int signum)
 
 #endif /* !G_OS_WIN32 */
 
+GSource *
+g_child_watch_source_new_with_flags (GPid pid,
+				     gint flags)
+{
+  GSource *source;
+  GChildWatchSource *child_watch_source;
+
+#if defined(G_OS_UNIX) && !defined(HAVE_WAITID)
+  if (flags & _G_CHILD_WATCH_FLAGS_WNOWAIT)
+    return NULL;
+#else
+  source = g_source_new (&g_child_watch_funcs, sizeof (GChildWatchSource));
+  child_watch_source = (GChildWatchSource *)source;
+
+  child_watch_source->pid = pid;
+#if defined(G_OS_UNIX) && defined(HAVE_WAITID)
+  if (flags & _G_CHILD_WATCH_FLAGS_WNOWAIT)
+    child_watch_source->wnowait = TRUE;
+#endif
+
+#ifdef G_OS_WIN32
+  child_watch_source->poll.fd = (gintptr) pid;
+  child_watch_source->poll.events = G_IO_IN;
+
+  g_source_add_poll (source, &child_watch_source->poll);
+#else /* G_OS_WIN32 */
+  G_LOCK (unix_signal_lock);
+  ensure_unix_signal_handler_installed_unlocked (SIGCHLD);
+  unix_child_watches = g_slist_prepend (unix_child_watches, child_watch_source);
+  unix_child_watch_source_waitpid (child_watch_source);
+  G_UNLOCK (unix_signal_lock);
+#endif /* G_OS_WIN32 */
+
+  return source;
+#endif
+}
+
 /**
  * g_child_watch_source_new:
  * @pid: process to watch. On POSIX the pid of a child process. On
@@ -4633,26 +4721,7 @@ g_unix_signal_handler (int signum)
 GSource *
 g_child_watch_source_new (GPid pid)
 {
-  GSource *source = g_source_new (&g_child_watch_funcs, sizeof (GChildWatchSource));
-  GChildWatchSource *child_watch_source = (GChildWatchSource *)source;
-
-  child_watch_source->pid = pid;
-
-#ifdef G_OS_WIN32
-  child_watch_source->poll.fd = (gintptr) pid;
-  child_watch_source->poll.events = G_IO_IN;
-
-  g_source_add_poll (source, &child_watch_source->poll);
-#else /* G_OS_WIN32 */
-  G_LOCK (unix_signal_lock);
-  ensure_unix_signal_handler_installed_unlocked (SIGCHLD);
-  unix_child_watches = g_slist_prepend (unix_child_watches, child_watch_source);
-  if (waitpid (pid, &child_watch_source->child_status, WNOHANG) > 0)
-    child_watch_source->child_exited = TRUE;
-  G_UNLOCK (unix_signal_lock);
-#endif /* G_OS_WIN32 */
-
-  return source;
+  return g_child_watch_source_new_with_flags (pid, 0);
 }
 
 /**
