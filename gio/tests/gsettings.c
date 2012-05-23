@@ -2055,6 +2055,9 @@ main (int argc, char *argv[])
 {
   gchar *enums;
   gint result;
+  GSubprocess *proc;
+  GError *local_error = NULL;
+  GError **error = &local_error;
 
   setlocale (LC_ALL, "");
 
@@ -2070,27 +2073,35 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   g_remove ("org.gtk.test.enums.xml");
-  g_assert (g_spawn_command_line_sync ("../../gobject/glib-mkenums "
-                                       "--template " SRCDIR "/enums.xml.template "
-                                       SRCDIR "/testenum.h",
-                                       &enums, NULL, &result, NULL));
-  g_assert (result == 0);
+  proc = g_subprocess_new_with_args ("../../gobject/glib-mkenums",
+				     "--template", SRCDIR "/enums.xml.template",
+				     SRCDIR "/testenum.h", NULL);
+  (void) g_subprocess_run_sync_get_stdout_utf8 (proc, &enums, NULL, error);
+  g_assert_no_error (local_error);
+  g_object_unref (proc);
+				     
   g_assert (g_file_set_contents ("org.gtk.test.enums.xml", enums, -1, NULL));
   g_free (enums);
 
   g_remove ("gschemas.compiled");
-  g_assert (g_spawn_command_line_sync ("../glib-compile-schemas --targetdir=. "
-                                       "--schema-file=org.gtk.test.enums.xml "
-                                       "--schema-file=" SRCDIR "/org.gtk.test.gschema.xml",
-                                       NULL, NULL, &result, NULL));
-  g_assert (result == 0);
+  proc = g_subprocess_new_with_args ("../glib-compile-schemas",
+				     "--targetdir=.",
+				     "--schema-file=org.gtk.test.enums.xml",
+				     "--schema-file=" SRCDIR "/org.gtk.test.gschema.xml",
+				     NULL);
+  (void) g_subprocess_run_sync (proc, NULL, error);
+  g_assert_no_error (local_error);
+  g_object_unref (proc);
 
   g_remove ("schema-source/gschemas.compiled");
   g_mkdir ("schema-source", 0777);
-  g_assert (g_spawn_command_line_sync ("../glib-compile-schemas --targetdir=schema-source "
-                                       "--schema-file=" SRCDIR "/org.gtk.schemasourcecheck.gschema.xml",
-                                       NULL, NULL, &result, NULL));
-  g_assert (result == 0);
+  proc = g_subprocess_new_with_args ("../glib-compile-schemas",
+				     "--targetdir=schema-source",
+				     "--schema-file=" SRCDIR "/org.gtk.schemasourcecheck.gschema.xml",
+				     NULL);
+  (void) g_subprocess_run_sync (proc, NULL, error);
+  g_assert_no_error (local_error);
+  g_object_unref (proc);
 
   g_test_add_func ("/gsettings/basic", test_basic);
 
