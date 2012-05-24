@@ -226,6 +226,15 @@ g_subprocess_class_init (GSubprocessClass *class)
   gobject_class->get_property = g_subprocess_get_property;
   gobject_class->set_property = g_subprocess_set_property;
 
+  /**
+   * GSubprocess:executable:
+   *
+   * Argument to use as executable; if
+   * g_subprocess_set_use_search_path() has not been used, then this
+   * must be a full path.
+   *
+   * Since: 2.34
+   */
   g_object_class_install_property (gobject_class, PROP_EXECUTABLE,
 				   g_param_spec_string ("executable",
 							P_("Executable"),
@@ -998,7 +1007,7 @@ g_subprocess_set_standard_output_to_devnull (GSubprocess       *self,
  *
  * Calling this function overrides any previous calls, as well as
  * other related functions such as
- * g_subprocess_set_standard_output_file_path().
+ * g_subprocess_set_standard_output_to_devnull().
  *
  * It is invalid to call this function after g_subprocess_start() has
  * been called.
@@ -1061,9 +1070,9 @@ g_subprocess_set_standard_error_to_devnull (GSubprocess       *self,
  * of the current process.  Specify %TRUE for it to be merged with
  * standard output.  In this case, the disposition of standard output
  * controls the merged stream; for example, if you combine
- * g_subprocess_set_standard_error_to_stdout() and
- * g_subprocess_set_standard_output_file_path(), the merged stream
- * will be sent to the specified file.
+ * g_subprocess_set_standard_error_to_stdout() and request a stream
+ * for standard output from g_subprocess_start_with_pipes(), both
+ * streams will be merged into the returned stream.
  *
  * Calling this function overrides any previous calls, as well as
  * other related functions such as
