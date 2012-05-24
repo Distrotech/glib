@@ -81,6 +81,10 @@ void             g_subprocess_set_use_search_path (GSubprocess     *self,
 						   gboolean         do_search_path);
 
 GLIB_AVAILABLE_IN_2_34
+void             g_subprocess_set_use_search_path_from_envp (GSubprocess     *self,
+							     gboolean         do_search_path);
+
+GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_set_leave_descriptors_open (GSubprocess     *self,
 							  gboolean         do_leave_descriptors_open);
 

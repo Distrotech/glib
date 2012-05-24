@@ -71,6 +71,7 @@ struct _GSubprocess
 
   guint detached : 1;
   guint search_path : 1;
+  guint search_path_from_envp : 1;
   guint leave_descriptors_open : 1;
   guint stdin_to_devnull : 1;
   guint stdout_to_devnull : 1;
@@ -501,6 +502,31 @@ g_subprocess_set_use_search_path (GSubprocess     *self,
   g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
   
   self->search_path = do_search_path;
+}
+
+/**
+ * g_subprocess_set_use_search_path_from_envp:
+ * @self: a #GSubprocess
+ * @do_search_path_from_envp: %TRUE if the PATH environment variable should be searched
+ *
+ * This option corresponds to the %G_SPAWN_SEARCH_PATH_FROM_ENVP flag;
+ * the uses for this are fairly specialized, such as when you are
+ * proxying execution from another context.
+ *
+ * It is invalid to call this function after g_subprocess_start() has
+ * been called.
+ *
+ * Since: 2.34
+ */
+void
+g_subprocess_set_use_search_path_from_envp (GSubprocess     *self,
+					    gboolean         do_search_path_from_envp)
+{
+  g_return_if_fail (G_IS_SUBPROCESS (self));
+  g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
+  
+  self->search_path_from_envp = do_search_path_from_envp;
+
 }
 
 /**
@@ -1411,6 +1437,8 @@ g_subprocess_start_with_pipes (GSubprocess       *self,
     spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
   if (self->search_path)
     spawn_flags |= G_SPAWN_SEARCH_PATH;
+  if (self->search_path_from_envp)
+    spawn_flags |= G_SPAWN_SEARCH_PATH_FROM_ENVP;
   if (!self->detached)
     spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
 
