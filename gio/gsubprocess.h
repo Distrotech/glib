@@ -189,8 +189,8 @@ gboolean         g_subprocess_run_sync (GSubprocess   *self,
 GLIB_AVAILABLE_IN_2_34
 GPid             g_subprocess_get_pid (GSubprocess     *self);
 
-typedef void  (GSubprocessWatchFunc)    (GSubprocess      *subprocess,
-					 gpointer          user_data);
+typedef void  (*GSubprocessWatchFunc)    (GSubprocess      *subprocess,
+					  gpointer          user_data);
 
 GLIB_AVAILABLE_IN_2_34
 GSource *        g_subprocess_add_watch (GSubprocess                  *self,

@@ -1598,7 +1598,7 @@ g_subprocess_add_watch (GSubprocess             *self,
 
 typedef struct {
   GSubprocess *self;
-  GSubprocessWatchFunc *callback;
+  GSubprocessWatchFunc callback;
   gpointer user_data;
   GDestroyNotify notify;
   gboolean have_wnowait;
