@@ -148,9 +148,9 @@ g_subprocess_finalize (GObject *object)
 {
   GSubprocess *self = G_SUBPROCESS (object);
 
-  if (self->state > G_SUBPROCESS_STATE_BUILDING
-      && !self->detached
-      && !self->reaped_child)
+  if (self->state > G_SUBPROCESS_STATE_BUILDING &&
+      !self->detached &&
+      !self->reaped_child)
     {
 #ifdef G_OS_UNIX
       /* Here we need to actually call waitpid() to clean up the

@@ -235,7 +235,7 @@ gboolean         g_subprocess_request_exit (GSubprocess       *self);
 GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_force_exit (GSubprocess       *self);
 
-/**** High level wrapers ****/
+/**** High level wrappers ****/
 
 GLIB_AVAILABLE_IN_2_34
 gboolean         g_subprocess_run_sync_get_output_bytes (GSubprocess          *self,
