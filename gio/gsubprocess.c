@@ -1703,6 +1703,8 @@ g_subprocess_create_source (GSubprocess             *self,
   g_return_val_if_fail (self->state == G_SUBPROCESS_STATE_RUNNING, 0);
   g_return_val_if_fail (!self->detached, 0);
 
+  trampoline_data = g_new (GSubprocessWatchTrampolineData, 1);
+
   source = GLIB_PRIVATE_CALL (g_child_watch_source_new_with_flags) (self->pid, _G_CHILD_WATCH_FLAGS_WNOWAIT);
   if (source == NULL)
     {
@@ -1714,7 +1716,6 @@ g_subprocess_create_source (GSubprocess             *self,
       trampoline_data->have_wnowait = TRUE;
     }
   g_source_set_priority (source, priority);
-  trampoline_data = g_new (GSubprocessWatchTrampolineData, 1);
   trampoline_data->self = g_object_ref (self);
   trampoline_data->callback = function;
   trampoline_data->user_data = user_data;
