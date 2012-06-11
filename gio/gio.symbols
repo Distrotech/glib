@@ -1080,6 +1080,7 @@ g_subprocess_add_watch
 g_subprocess_append_arg
 g_subprocess_append_args
 g_subprocess_append_args_va
+g_subprocess_create_source
 g_subprocess_force_exit
 g_subprocess_get_status_code
 g_subprocess_get_pid
@@ -1109,7 +1110,7 @@ g_subprocess_set_standard_input_bytes
 g_subprocess_set_standard_input_file_path
 g_subprocess_set_standard_input_str
 g_subprocess_set_standard_input_stream
-g_subprocess_set_standard_input_to_devnull
+g_subprocess_set_standard_input_inherit
 #ifdef G_OS_UNIX
 g_subprocess_set_standard_input_unix_fd
 #endif
