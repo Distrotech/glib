@@ -53,7 +53,7 @@ test_noop_all_to_null (void)
 
   proc = get_test_subprocess ("noop");
 
-  g_subprocess_set_standard_input_to_devnull (proc, TRUE);
+  g_subprocess_set_standard_input_inherit (proc, FALSE);
   g_subprocess_set_standard_output_to_devnull (proc, TRUE);
   g_subprocess_set_standard_error_to_devnull (proc, TRUE);
 
@@ -88,6 +88,23 @@ test_noop_non_detached (void)
   GSubprocess *proc;
 
   proc = get_test_subprocess ("noop");
+
+  (void)g_subprocess_start (proc, NULL, error);
+  g_assert_no_error (local_error);
+  
+  g_object_unref (proc);
+}
+
+static void
+test_noop_stdin_inherit (void)
+{
+  GError *local_error = NULL;
+  GError **error = &local_error;
+  GSubprocess *proc;
+
+  proc = get_test_subprocess ("noop");
+
+  g_subprocess_set_standard_input_inherit (proc, TRUE);
 
   (void)g_subprocess_start (proc, NULL, error);
   g_assert_no_error (local_error);
@@ -471,6 +488,7 @@ main (int argc, char **argv)
   g_test_add_func ("/gsubprocess/noop-all-to-null", test_noop_all_to_null);
   g_test_add_func ("/gsubprocess/noop-detached", test_noop_detached);
   g_test_add_func ("/gsubprocess/noop-nondetached", test_noop_non_detached);
+  g_test_add_func ("/gsubprocess/noop-stdin-inherit", test_noop_stdin_inherit);
 #ifdef G_OS_UNIX
   g_test_add_func ("/gsubprocess/search-path", test_search_path);
 #endif

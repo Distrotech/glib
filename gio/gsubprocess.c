@@ -73,7 +73,7 @@ struct _GSubprocess
   guint search_path : 1;
   guint search_path_from_envp : 1;
   guint leave_descriptors_open : 1;
-  guint stdin_to_devnull : 1;
+  guint stdin_inherit : 1;
   guint stdout_to_devnull : 1;
   guint stderr_to_devnull : 1;
   guint stderr_to_stdout : 1;
@@ -122,7 +122,7 @@ g_subprocess_init (GSubprocess  *self)
 {
   self->state = G_SUBPROCESS_STATE_BUILDING;
   self->child_argv = g_ptr_array_new_with_free_func (g_free);
-  self->stdin_to_devnull = TRUE;
+  self->stdin_inherit = FALSE;
   self->stdin_fd = -1;
   self->internal_stdin_fd = -1;
   self->stdout_fd = -1;
@@ -787,7 +787,7 @@ g_subprocess_set_child_setup (GSubprocess           *self,
  * other related functions such as
  * g_subprocess_set_standard_input_unix_fd(),
  * g_subprocess_set_standard_input_stream(), and
- * g_subprocess_set_standard_input_to_devnull().
+ * g_subprocess_set_standard_input_inherit().
  *
  * It is invalid to call this function after g_subprocess_start() has
  * been called.
@@ -804,7 +804,7 @@ g_subprocess_set_standard_input_file_path (GSubprocess       *self,
 
   g_clear_object (&self->stdin_stream);
   g_clear_pointer (&self->stdin_path, g_free);
-  self->stdin_to_devnull = FALSE;
+  self->stdin_inherit = FALSE;
   self->stdin_fd = -1;
 
   self->stdin_path = g_strdup (file_path);
@@ -837,7 +837,7 @@ g_subprocess_set_standard_input_unix_fd (GSubprocess       *self,
 
   g_clear_object (&self->stdin_stream);
   g_clear_pointer (&self->stdin_path, g_free);
-  self->stdin_to_devnull = FALSE;
+  self->stdin_inherit = FALSE;
   self->stdin_fd = -1;
 
   self->stdin_fd = fd;
@@ -845,9 +845,9 @@ g_subprocess_set_standard_input_unix_fd (GSubprocess       *self,
 #endif
 
 /**
- * g_subprocess_set_standard_input_to_devnull:
+ * g_subprocess_set_standard_input_inherit:
  * @self: a #GSubprocess
- * @to_devnull: If %TRUE, redirect input from null stream, if %FALSE, inherit
+ * @inherit: If %TRUE, redirect input from null stream, if %FALSE, inherit
  *
  * The default is for child processes to have their input stream
  * pointed at a null stream (e.g. on Unix, /dev/null), because having
@@ -855,8 +855,8 @@ g_subprocess_set_standard_input_unix_fd (GSubprocess       *self,
  * conditions and is generally nonsensical.  See the documentation of
  * g_spawn_async_with_pipes() and %G_SPAWN_CHILD_INHERITS_STDIN.
  *
- * If @to_devnull is %FALSE, then this function will cause the
- * standard input of the child process to be inherited.
+ * If @inherit is %TRUE, then this function will cause the standard
+ * input of the child process to be inherited.
  *
  * Calling this function overrides any previous calls, as well as
  * other related functions such as
@@ -868,18 +868,18 @@ g_subprocess_set_standard_input_unix_fd (GSubprocess       *self,
  * Since: 2.34
  */
 void
-g_subprocess_set_standard_input_to_devnull (GSubprocess       *self,
-					    gboolean           to_devnull)
+g_subprocess_set_standard_input_inherit (GSubprocess       *self,
+					 gboolean           inherit)
 {
   g_return_if_fail (G_IS_SUBPROCESS (self));
   g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
 
   g_clear_object (&self->stdin_stream);
   g_clear_pointer (&self->stdin_path, g_free);
-  self->stdin_to_devnull = FALSE;
+  self->stdin_inherit = FALSE;
   self->stdin_fd = -1;
 
-  self->stdin_to_devnull = to_devnull;
+  self->stdin_inherit = inherit;
 }
 
 /**
@@ -929,7 +929,7 @@ g_subprocess_set_standard_input_stream (GSubprocess       *self,
 
   g_clear_object (&self->stdin_stream);
   g_clear_pointer (&self->stdin_path, g_free);
-  self->stdin_to_devnull = FALSE;
+  self->stdin_inherit = FALSE;
   self->stdin_fd = -1;
 
   self->stdin_stream = g_object_ref (stream);
@@ -1497,35 +1497,18 @@ g_subprocess_start_with_pipes (GSubprocess       *self,
   if (out_stdin_stream != NULL
       || self->stdin_stream != NULL)
     stdin_arg = &stdin_pipe_fd;
-  else
-    {
-      g_assert (self->stdin_fd != -1 || self->stdin_to_devnull);
-      stdin_arg = NULL;
-      if (!self->stdin_to_devnull)
-	spawn_flags |= G_SPAWN_CHILD_INHERITS_STDIN;
-    }
+  else if (self->stdin_inherit)
+    spawn_flags |= G_SPAWN_CHILD_INHERITS_STDIN;
 
   if (out_stdout_stream != NULL)
     stdout_arg = &stdout_pipe_fd;
-  else
-    {
-      g_assert (self->stdout_fd == -1 || self->stdout_to_devnull);
-      stdout_arg = NULL;
-      if (self->stdout_to_devnull)
-	spawn_flags |= G_SPAWN_STDOUT_TO_DEV_NULL;
-    }
+  else if (self->stdout_to_devnull)
+    spawn_flags |= G_SPAWN_STDOUT_TO_DEV_NULL;
 
   if (out_stderr_stream != NULL)
     stderr_arg = &stderr_pipe_fd;
-  else
-    {
-      g_assert (self->stderr_fd == -1
-		|| self->stderr_to_devnull
-		|| self->stderr_to_stdout);
-      stderr_arg = NULL;
-      if (self->stderr_to_devnull)
-	spawn_flags |= G_SPAWN_STDERR_TO_DEV_NULL;
-    }
+  else if (self->stderr_to_devnull)
+    spawn_flags |= G_SPAWN_STDERR_TO_DEV_NULL;
 
   if (!g_spawn_async_with_pipes (self->working_directory,
 				 real_argv,

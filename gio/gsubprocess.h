@@ -124,8 +124,8 @@ void             g_subprocess_set_standard_input_unix_fd (GSubprocess       *sel
 #endif
 
 GLIB_AVAILABLE_IN_2_34
-void             g_subprocess_set_standard_input_to_devnull (GSubprocess       *self,
-							     gboolean           to_devnull);
+void             g_subprocess_set_standard_input_inherit (GSubprocess       *self,
+							  gboolean           inherit);
 
 GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_set_standard_input_stream (GSubprocess       *self,
