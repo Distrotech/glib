@@ -80,7 +80,7 @@ struct _GSubprocess
 
   guint reaped_child : 1;
 
-  gint io_priority;
+  gint stdin_priority;
 
   gchar *working_directory;
 
@@ -129,7 +129,7 @@ g_subprocess_init (GSubprocess  *self)
   self->internal_stdout_fd = -1;
   self->stderr_fd = -1;
   self->internal_stderr_fd = -1;
-  self->io_priority = G_PRIORITY_DEFAULT;
+  self->stdin_priority = G_PRIORITY_DEFAULT;
 }
 
 static void
@@ -775,30 +775,6 @@ g_subprocess_set_child_setup (GSubprocess           *self,
 /**** Input and Output ****/
 
 /**
- * g_subprocess_set_io_priority:
- * @self: a #GSubprocess
- * @io_priority: I/O priority
- *
- * For the cases where #GSubprocess internally uses asynchronous I/O,
- * this function allows controlling the priority.  The default is
- * %G_PRIORITY_DEFAULT.
- *
- * It is invalid to call this function after g_subprocess_start() has
- * been called.
- *
- * Since: 2.34
- */
-void
-g_subprocess_set_io_priority (GSubprocess       *self,
-			      gint               io_priority)
-{
-  g_return_if_fail (G_IS_SUBPROCESS (self));
-  g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
-
-  self->io_priority = io_priority;
-}
-
-/**
  * g_subprocess_set_standard_input_file_path:
  * @self: a #GSubprocess
  * @file_path: String containing path to file to use as standard input
@@ -910,14 +886,17 @@ g_subprocess_set_standard_input_to_devnull (GSubprocess       *self,
  * g_subprocess_set_standard_input_stream:
  * @self: a #GSubprocess
  * @stream: an input stream
+ * @priority: an I/O priority, default is %G_PRIORITY_DEFAULT
  *
  * Use the provided stream as input to the child process.  When the
  * process is started, such as via g_subprocess_start(), the stream
  * will be asynchronously provided to the child, via a function
- * equivalent to g_output_stream_splice_async().  This operation may
- * or may not occur in a separate thread; if your program modifies the
- * given @stream after the process has started, the given @stream must
- * be threadsafe.
+ * equivalent to g_output_stream_splice_async(), and @priority will be
+ * used to determine scheduling priority.
+ *
+ * Writing input data to the child process may or may not occur in a
+ * separate thread; if your program modifies the given @stream after
+ * the process has started, the given @stream must be threadsafe.
  * 
  * Because of the fact that input is asynchronous, it is safe to use
  * g_subprocess_set_standard_input_stream(), then synchronously wait
@@ -941,7 +920,8 @@ g_subprocess_set_standard_input_to_devnull (GSubprocess       *self,
  */
 void
 g_subprocess_set_standard_input_stream (GSubprocess       *self,
-					GInputStream      *stream)
+					GInputStream      *stream,
+					gint               priority)
 {
   g_return_if_fail (G_IS_SUBPROCESS (self));
   g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
@@ -953,6 +933,7 @@ g_subprocess_set_standard_input_stream (GSubprocess       *self,
   self->stdin_fd = -1;
 
   self->stdin_stream = g_object_ref (stream);
+  self->stdin_priority = priority;
 }
 
 /**
@@ -984,17 +965,17 @@ g_subprocess_set_standard_input_bytes (GSubprocess       *self,
   g_return_if_fail (buf != NULL);
 
   stream = g_memory_input_stream_new_from_bytes (buf);
-  g_subprocess_set_standard_input_stream (self, stream);
+  g_subprocess_set_standard_input_stream (self, stream, G_PRIORITY_DEFAULT);
   g_object_unref (stream);
 }
 
 /**
  * g_subprocess_set_standard_input_str:
  * @self: a #GSubprocess
- * @str: (array zero-terminated=1) (element-type guint8): Buffer to use as input
+ * @str: String to use as input
  *
- * Use the provided data as input to the child process.  This function
- * simply wraps g_subprocess_set_standard_input_bytes().
+ * Use the provided string as input to the child process.  This
+ * function simply wraps g_subprocess_set_standard_input_bytes().
  *
  * Calling this function overrides any previous calls, as well as
  * other related functions such as
@@ -1569,7 +1550,7 @@ g_subprocess_start_with_pipes (GSubprocess       *self,
 					self->stdin_stream,
 					G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
 					G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-					self->io_priority,
+					self->stdin_priority,
 					cancellable,
 					g_subprocess_on_input_splice_finished,
 					g_object_ref (self));
@@ -2109,7 +2090,7 @@ run_sync_get_output_membufs (GSubprocess               *self,
   if (subproc_stdout)
     {
       g_output_stream_splice_async (stdout_membuf, subproc_stdout, flags,
-				    self->io_priority, cancellable,
+				    G_PRIORITY_DEFAULT, cancellable,
 				    g_subprocess_on_get_output_splice_done, &data);
       g_object_unref (subproc_stdout);
       data.events_needed++;
@@ -2118,7 +2099,7 @@ run_sync_get_output_membufs (GSubprocess               *self,
   if (subproc_stderr)
     {
       g_output_stream_splice_async (stderr_membuf, subproc_stderr, flags,
-				    self->io_priority, cancellable,
+				    G_PRIORITY_DEFAULT, cancellable,
 				    g_subprocess_on_get_output_splice_done, &data);
       g_object_unref (subproc_stderr);
       data.events_needed++;

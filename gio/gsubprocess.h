@@ -114,10 +114,6 @@ void             g_subprocess_set_child_setup (GSubprocess           *self,
 /**** Input and Output ****/
 
 GLIB_AVAILABLE_IN_2_34
-void             g_subprocess_set_io_priority (GSubprocess       *self,
-					       gint               io_priority);
-
-GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_set_standard_input_file_path (GSubprocess       *self,
 							    const gchar       *file_path);
 
@@ -133,7 +129,8 @@ void             g_subprocess_set_standard_input_to_devnull (GSubprocess       *
 
 GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_set_standard_input_stream (GSubprocess       *self,
-							 GInputStream      *stream);
+							 GInputStream      *stream,
+							 int                io_priority);
 
 GLIB_AVAILABLE_IN_2_34
 void             g_subprocess_set_standard_input_bytes (GSubprocess       *self,
