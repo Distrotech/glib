@@ -219,12 +219,6 @@ GLIB_AVAILABLE_IN_2_34
 gint             g_subprocess_get_status_code (GSubprocess   *self);
 
 GLIB_AVAILABLE_IN_2_34
-gint             g_subprocess_get_unix_exit_status (GSubprocess   *self,
-						    gboolean      *out_exited,
-						    gboolean      *out_signaled,
-						    gint          *out_code);
-
-GLIB_AVAILABLE_IN_2_34
 gboolean         g_subprocess_wait_sync (GSubprocess   *self,
 					 GCancellable  *cancellable,
 					 GError       **error);

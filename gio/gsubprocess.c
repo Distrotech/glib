@@ -112,7 +112,8 @@ G_DEFINE_TYPE (GSubprocess, g_subprocess, G_TYPE_OBJECT);
 enum
 {
   PROP_0,
-  PROP_EXECUTABLE
+  PROP_EXECUTABLE,
+  PROP_WORKING_DIRECTORY
 };
 
 static void
@@ -188,6 +189,11 @@ g_subprocess_set_property (GObject      *object,
       g_ptr_array_add (self->child_argv, g_value_dup_string (value));
       break;
 
+    case PROP_WORKING_DIRECTORY:
+      g_free (self->working_directory);
+      self->working_directory = g_value_dup_string (value);
+      break;
+
     default:
       g_assert_not_reached ();
     }
@@ -209,6 +215,10 @@ g_subprocess_get_property (GObject    *object,
 			    self->child_argv->pdata[0]);
       else
 	g_value_set_string (value, NULL);
+      break;
+
+    case PROP_WORKING_DIRECTORY:
+      g_subprocess_set_working_directory (self, g_value_get_string (value));
       break;
 
     default:
@@ -239,6 +249,22 @@ g_subprocess_class_init (GSubprocessClass *class)
 				   g_param_spec_string ("executable",
 							P_("Executable"),
 							P_("Path to executable"),
+							NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT |
+							G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GSubprocess:working-directory:
+   *
+   * Used for child's initial current working directory. %NULL will
+   * cause the child to inherit the parent's working directory; this
+   * is the default.
+   *
+   * Since: 2.34
+   */
+  g_object_class_install_property (gobject_class, PROP_WORKING_DIRECTORY,
+				   g_param_spec_string ("working-directory",
+							P_("Working Directory"),
+							P_("Path to working directory"),
 							NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT |
 							G_PARAM_STATIC_STRINGS));
 }
