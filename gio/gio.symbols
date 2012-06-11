@@ -1077,7 +1077,6 @@ g_tcp_connection_get_type
 g_tcp_connection_set_graceful_disconnect
 g_tcp_connection_get_graceful_disconnect
 g_subprocess_add_watch
-g_subprocess_add_watch_full
 g_subprocess_append_arg
 g_subprocess_append_args
 g_subprocess_append_args_va

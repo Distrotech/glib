@@ -190,16 +190,11 @@ typedef void  (*GSubprocessWatchFunc)    (GSubprocess      *subprocess,
 					  gpointer          user_data);
 
 GLIB_AVAILABLE_IN_2_34
-GSource *        g_subprocess_add_watch (GSubprocess                  *self,
-					 GSubprocessWatchFunc          function,
-					 gpointer                      user_data);
-
-GLIB_AVAILABLE_IN_2_34
-GSource *        g_subprocess_add_watch_full (GSubprocess                  *self,
-					      gint                          priority,
-					      GSubprocessWatchFunc          function,
-					      gpointer                      user_data,
-					      GDestroyNotify                notify);
+guint           g_subprocess_add_watch (GSubprocess                  *self,
+					gint                          priority,
+					GSubprocessWatchFunc          function,
+					gpointer                      user_data,
+					GDestroyNotify                notify);
 
 GLIB_AVAILABLE_IN_2_34
 GSource *        g_subprocess_create_source (GSubprocess                  *self,

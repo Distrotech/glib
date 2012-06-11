@@ -3931,7 +3931,6 @@ g_subprocess_set_working_directory
 g_subprocess_start_with_pipes
 g_subprocess_start
 g_subprocess_add_watch
-g_subprocess_add_watch_full
 g_subprocess_run_sync
 g_subprocess_wait_sync
 g_subprocess_request_exit

@@ -317,7 +317,6 @@ test_multi_1 (void)
   GOutputStream *third_stdin;
   GInputStream *third_stdout;
   GOutputStream *membuf;
-  GSource *proc_watch_source;
   TestMultiSpliceData data;
   int splice_flags = G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET;
 
@@ -356,14 +355,14 @@ test_multi_1 (void)
   g_timeout_add (250, on_idle_multisplice, &data);
 
   data.events_pending++;
-  proc_watch_source = g_subprocess_add_watch (first, on_subprocess_exited, &data);
-  g_source_unref (proc_watch_source);
+  g_subprocess_add_watch (first, G_PRIORITY_DEFAULT, on_subprocess_exited,
+			  &data, NULL);
   data.events_pending++;
-  proc_watch_source = g_subprocess_add_watch (second, on_subprocess_exited, &data);
-  g_source_unref (proc_watch_source);
+  g_subprocess_add_watch (second, G_PRIORITY_DEFAULT, on_subprocess_exited,
+			  &data, NULL);
   data.events_pending++;
-  proc_watch_source = g_subprocess_add_watch (third, on_subprocess_exited, &data);
-  g_source_unref (proc_watch_source);
+  g_subprocess_add_watch (third, G_PRIORITY_DEFAULT, on_subprocess_exited,
+			  &data, NULL);
 
   g_main_loop_run (data.loop);
 
@@ -432,7 +431,6 @@ test_terminate (void)
   GError *local_error = NULL;
   GError **error = &local_error;
   GMainLoop *loop;
-  GSource *source;
 
   proc = get_test_subprocess ("sleep-forever");
 
@@ -441,8 +439,8 @@ test_terminate (void)
 
   loop = g_main_loop_new (NULL, TRUE);
 
-  source = g_subprocess_add_watch (proc, on_request_quit_exited, loop);
-  g_source_unref (source);
+  (void) g_subprocess_add_watch (proc, G_PRIORITY_DEFAULT, on_request_quit_exited,
+				 loop, NULL);
 
   g_timeout_add_seconds (3, send_terminate, proc);
 

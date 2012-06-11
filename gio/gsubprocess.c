@@ -1606,31 +1606,6 @@ g_subprocess_get_pid (GSubprocess     *self)
   return self->pid;
 }
 
-/**
- * g_subprocess_add_watch:
- * @self: a #GSubprocess
- * @function: Callback invoked when child has exited
- * @user_data: Data for @function
- *
- * This function creates a source via g_subprocess_create_source() and
- * attaches it the to the <link
- * linkend="g-main-context-push-thread-default">thread-default main
- * loop</link>.
- *
- * For more information, see the documentation of
- * g_subprocess_add_watch_full().
- *
- * Returns: (transfer full): A newly-created #GSource for this process
- * Since: 2.34
- */
-GSource *
-g_subprocess_add_watch (GSubprocess             *self,
-			GSubprocessWatchFunc     function,
-			gpointer                 user_data)
-{
-  return g_subprocess_add_watch_full (self, G_PRIORITY_DEFAULT, function, user_data, NULL);
-}
-
 typedef struct {
   GSubprocess *self;
   GSubprocessWatchFunc callback;
@@ -1669,7 +1644,7 @@ g_subprocess_trampoline_data_destroy (gpointer user_data)
 }
 
 /**
- * g_subprocess_add_watch_full:
+ * g_subprocess_add_watch:
  * @self: a #GSubprocess
  * @priority: I/O priority
  * @function: Callback invoked when child has exited
@@ -1677,9 +1652,7 @@ g_subprocess_trampoline_data_destroy (gpointer user_data)
  * @notify: Destroy notify
  *
  * This function creates a source via g_subprocess_create_source() and
- * attaches it the to the <link
- * linkend="g-main-context-push-thread-default">thread-default main
- * loop</link>.
+ * attaches it the to the %NULL main context.
  *
  * Inside the callback, you should call either
  * g_subprocess_query_success() or g_subprocess_get_exit_code() to
@@ -1688,22 +1661,24 @@ g_subprocess_trampoline_data_destroy (gpointer user_data)
  * This function may not be used if g_subprocess_set_detached() has
  * been called.
  *
- * Returns: (transfer full): A newly-created #GSource for this process
+ * Returns: Integer identifier for this source in the %NULL main context
  * Since: 2.34
  */
-GSource *
-g_subprocess_add_watch_full (GSubprocess             *self,
-			     gint                     priority,
-			     GSubprocessWatchFunc     function,
-			     gpointer                 user_data,
-			     GDestroyNotify           notify)
+guint
+g_subprocess_add_watch (GSubprocess             *self,
+			gint                     priority,
+			GSubprocessWatchFunc     function,
+			gpointer                 user_data,
+			GDestroyNotify           notify)
 {
+  guint id;
   GSource *source;
 
   source = g_subprocess_create_source (self, priority, function, user_data, notify);
-  g_source_attach (source, g_main_context_get_thread_default ());
+  id = g_source_attach (source, NULL);
+  g_source_unref (source);
 
-  return source;
+  return id;
 }
 
 /**
@@ -1714,9 +1689,10 @@ g_subprocess_add_watch_full (GSubprocess             *self,
  * @user_data: Data for @function
  * @notify: Destroy notify
  *
- * This function is similar to g_child_watch_source_new(), except the
- * callback signature includes the subprocess @self, and status is
- * accessed via g_subprocess_query_success().
+ * This function is similar using g_child_watch_source_new(), except
+ * the callback signature includes the subprocess @self, and status is
+ * accessed via g_subprocess_query_success().  Do not call
+ * g_source_set_callback() on the returned source.
  *
  * This function may not be used if g_subprocess_set_detached() has
  * been called.
@@ -1925,7 +1901,9 @@ g_subprocess_wait_sync (GSubprocess        *self,
   pushed_thread_default = TRUE;
   loop = g_main_loop_new (context, TRUE);
   
-  source = g_subprocess_add_watch (self, g_subprocess_on_sync_watch, loop);
+  source = g_subprocess_create_source (self, G_PRIORITY_DEFAULT,
+				       g_subprocess_on_sync_watch, loop, NULL);
+  g_source_attach (source, g_main_context_get_thread_default ());
   cancellable_source = g_cancellable_source_new (cancellable);
   g_source_add_child_source (source, cancellable_source);
   g_source_unref (cancellable_source);
