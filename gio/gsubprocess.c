@@ -113,7 +113,8 @@ enum
 {
   PROP_0,
   PROP_EXECUTABLE,
-  PROP_WORKING_DIRECTORY
+  PROP_WORKING_DIRECTORY,
+  PROP_ENVIRONMENT
 };
 
 static void
@@ -190,8 +191,11 @@ g_subprocess_set_property (GObject      *object,
       break;
 
     case PROP_WORKING_DIRECTORY:
-      g_free (self->working_directory);
-      self->working_directory = g_value_dup_string (value);
+      g_subprocess_set_working_directory (self, g_value_get_string (value));
+      break;
+
+    case PROP_ENVIRONMENT:
+      g_subprocess_set_environment (self, (char**)g_value_get_boxed (value));
       break;
 
     default:
@@ -218,7 +222,11 @@ g_subprocess_get_property (GObject    *object,
       break;
 
     case PROP_WORKING_DIRECTORY:
-      g_subprocess_set_working_directory (self, g_value_get_string (value));
+      g_value_set_string (value, self->working_directory);
+      break;
+
+    case PROP_ENVIRONMENT:
+      g_value_set_boxed (value, (gpointer)self->child_envp);
       break;
 
     default:
@@ -267,6 +275,22 @@ g_subprocess_class_init (GSubprocessClass *class)
 							P_("Path to working directory"),
 							NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT |
 							G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GSubprocess:environment:
+   *
+   * Used for child's environment. %NULL will cause the child to
+   * inherit the parent's environment; this is the default.
+   *
+   * Since: 2.34
+   */
+  g_object_class_install_property (gobject_class, PROP_ENVIRONMENT,
+				   g_param_spec_boxed ("environment",
+						       P_("Environment"),
+						       P_("Environment for child process"),
+						       G_TYPE_STRV,
+						       G_PARAM_READWRITE | G_PARAM_CONSTRUCT |
+						       G_PARAM_STATIC_STRINGS));
 }
 
 /**** Creation ****/
@@ -667,12 +691,17 @@ g_subprocess_unsetenv (GSubprocess       *self,
 /**
  * g_subprocess_set_environment:
  * @self: a #GSubprocess
- * @envp: (array zero-terminated=1): An environment list
+ * @envp: (allow-none) (array zero-terminated=1): An environment list
  *
  * This completely replaces the environment child process will be run
  * in; it has no effect on the current process.  See the documentation
  * of g_environ_setenv() for more information about environment
  * variables.
+ *
+ * The default if none of g_subprocess_set_environment() or a related
+ * function such as g_subprocess_setenv() has been called is to use
+ * the environment of the parent process.  Passing %NULL to this
+ * function will restore that default.
  *
  * It is invalid to call this function after g_subprocess_start() has
  * been called.
@@ -685,7 +714,6 @@ g_subprocess_set_environment (GSubprocess       *self,
 {
   g_return_if_fail (G_IS_SUBPROCESS (self));
   g_return_if_fail (self->state == G_SUBPROCESS_STATE_BUILDING);
-  g_return_if_fail (envp != NULL);
 
   g_strfreev (self->child_envp);
   self->child_envp = g_strdupv (envp);
