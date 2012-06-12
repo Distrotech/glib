@@ -13,11 +13,28 @@
 /**
  * SECTION:gsubprocess
  * @title: GSubprocess
- * @short_description: Create child processes
+ * @short_description: Create child processes and monitor their status
  *
- * This class is primarily convenience API on top of the lower-level
- * g_spawn_async_with_pipes() and related functions provided by GLib.
- * 
+ * This class wraps the lower-level g_spawn_async_with_pipes() API,
+ * providing a more modern GIO-style API, such as returning
+ * #GInputStream objects for child output pipes.
+ *
+ * There are quite a variety of ways to spawn processes for different
+ * use cases; the primary intent of this class is to act as a
+ * fudamental API, upon which a variety of higher-level helpers can be
+ * written.  However, this class does also come with a few example
+ * higher level functions, such as
+ * g_subprocess_run_sync_get_stdout_utf8().
+ *
+ * One major advantage that GIO brings is comprehensive API for
+ * asynchronous I/O, such g_output_stream_splice_async().  This makes
+ * GSubprocess significantly more powerful and flexible than
+ * equivalent APIs in some other languages such as the "subprocess.py"
+ * included with Python.  For example, using #GSubprocess one could
+ * create two child processes, reading standard output from the first,
+ * processing it, and writing to the input stream of the second, all
+ * without blocking the main loop.
+ *
  * Since: 2.34
  */
 
