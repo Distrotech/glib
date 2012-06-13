@@ -1589,10 +1589,26 @@ g_subprocess_start_with_pipes (GSubprocess       *self,
  * g_subprocess_get_pid:
  * @self: a #GSubprocess
  *
- * Returns the identifier for this child process. 
-
+ * The identifier for this child process; it is valid as long as the
+ * process @self is referenced.  In particular, do
+ * <emphasis>not</emphasis> call g_spawn_close_pid() on this value;
+ * that is handled internally.
+ *
+ * On some Unix versions, it is possible for there to be a race
+ * condition where waitpid() may have been called to collect the child
+ * before any watches (such as that installed by
+ * g_subprocess_add_watch()) have fired.  If you are planning to use
+ * native functions such as kill() on the pid, your program should
+ * gracefully handle an %ESRCH result to mitigate this.
+ *
+ * If you want to request process termination, using the high level
+ * g_subprocess_request_exit() and g_subprocess_force_exit() API is
+ * recommended.
+ *
  * This function may not be used if g_subprocess_set_detached() has
  * been called.
+ *
+ * Returns: Operating-system specific identifier for child process
  *
  * Since: 2.34
  */
