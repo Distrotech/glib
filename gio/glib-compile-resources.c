@@ -320,9 +320,12 @@ end_element (GMarkupParseContext  *context,
 
 	      if (!g_subprocess_run_sync (proc, NULL, &my_error))
 		{
+		  g_object_unref (proc);
                   g_propagate_error (error, my_error);
                   goto cleanup;
 		}
+
+	      g_object_unref (proc);
 
               g_free (real_file);
               real_file = g_strdup (tmp_file);
@@ -362,9 +365,12 @@ end_element (GMarkupParseContext  *context,
 
 	      if (!g_subprocess_run_sync (proc, NULL, &my_error))
 		{
+		  g_object_unref (proc);
                   g_propagate_error (error, my_error);
                   goto cleanup;
 		}
+
+	      g_object_unref (proc);
 
               g_free (real_file);
               real_file = g_strdup (tmp_file2);
