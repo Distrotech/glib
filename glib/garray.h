@@ -138,6 +138,8 @@ void       g_ptr_array_remove_range       (GPtrArray        *array,
 					   guint             length);
 void       g_ptr_array_add                (GPtrArray        *array,
 					   gpointer          data);
+void       g_ptr_array_addv               (GPtrArray        *array,
+					   ...) G_GNUC_NULL_TERMINATED;
 void       g_ptr_array_sort               (GPtrArray        *array,
 					   GCompareFunc      compare_func);
 void       g_ptr_array_sort_with_data     (GPtrArray        *array,

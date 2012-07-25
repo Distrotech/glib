@@ -1353,6 +1353,32 @@ g_ptr_array_add (GPtrArray *farray,
 }
 
 /**
+ * g_ptr_array_addv:
+ * @array: a #GPtrArray.
+ * @...: List of strings, %NULL terminated
+ *
+ * Adds all pointer arguments to the end of the pointer array. The
+ * array will grow in size automatically if necessary.
+ **/
+void
+g_ptr_array_addv (GPtrArray *farray,
+		  ...)
+{
+  GRealPtrArray* array = (GRealPtrArray*) farray;
+  va_list args;
+  gpointer arg;
+
+  g_return_if_fail (array);
+
+  va_start (args, farray);
+
+  while ((arg = va_arg (args, gpointer)) != NULL)
+    g_ptr_array_add (farray, arg);
+
+  va_end (args);
+}
+
+/**
  * g_ptr_array_sort:
  * @array: a #GPtrArray.
  * @compare_func: comparison function.

@@ -367,6 +367,22 @@ pointer_array_add (void)
 }
 
 static void
+pointer_array_addv (void)
+{
+  GPtrArray *gparray;
+  gpointer *segment;
+
+  gparray = g_ptr_array_new ();
+
+  g_ptr_array_addv (gparray, "foo", "bar", "baz", NULL);
+  g_assert_cmpint (gparray->len, ==, 3);
+  g_ptr_array_addv (gparray, "hello", "world", NULL);
+  g_assert_cmpint (gparray->len, ==, 5);
+
+  g_ptr_array_free (gparray, TRUE);
+}
+
+static void
 pointer_array_ref_count (void)
 {
   GPtrArray *gparray;
@@ -853,6 +869,7 @@ main (int argc, char *argv[])
 
   /* pointer arrays */
   g_test_add_func ("/pointerarray/add", pointer_array_add);
+  g_test_add_func ("/pointerarray/addv", pointer_array_addv);
   g_test_add_func ("/pointerarray/ref-count", pointer_array_ref_count);
   g_test_add_func ("/pointerarray/free-func", pointer_array_free_func);
   g_test_add_func ("/pointerarray/sort", pointer_array_sort);
