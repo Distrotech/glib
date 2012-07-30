@@ -1653,6 +1653,28 @@ typedef enum /*< flags >*/ {
   G_TEST_DBUS_NONE = 0
 } GTestDBusFlags;
 
+/**
+ * GSubprocessFlags:
+ * @G_SUBPROCESS_FLAGS_NONE: No flags.
+ *
+ * Flags to define the behaviour of a #GSubprocess.
+ *
+ * Since: 2.34
+ **/
+typedef enum {
+  G_SUBPROCESS_FLAGS_NONE                = 0,
+  G_SUBPROCESS_FLAGS_SEARCH_PATH         = (1u << 0),
+  G_SUBPROCESS_FLAGS_TERM_WITH_PARENT    = (1u << 1),
+  G_SUBPROCESS_FLAGS_NEW_SESSION         = (1u << 2),
+  G_SUBPROCESS_FLAGS_STDIN_PIPE          = (1u << 3),
+  G_SUBPROCESS_FLAGS_STDIN_INHERIT       = (1u << 4),
+  G_SUBPROCESS_FLAGS_STDOUT_PIPE         = (1u << 5),
+  G_SUBPROCESS_FLAGS_STDOUT_SILENCE      = (1u << 6),
+  G_SUBPROCESS_FLAGS_STDERR_PIPE         = (1u << 7),
+  G_SUBPROCESS_FLAGS_STDERR_SILENCE      = (1u << 8),
+  G_SUBPROCESS_FLAGS_STDERR_MERGE        = (1u << 9)
+} GSubprocessFlags;
+
 G_END_DECLS
 
 #endif /* __GIO_ENUMS_H__ */

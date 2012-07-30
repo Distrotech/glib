@@ -1,6 +1,7 @@
 /* GIO - GLib Input, Output and Streaming Library
  *
  * Copyright © 2012 Red Hat, Inc.
+ * Copyright © 2012 Canonical Limited
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -8,6 +9,9 @@
  * your option) any later version.
  *
  * See the included COPYING file for more information.
+ *
+ * Authors: Colin Walters <walters@verbum.org>
+ *          Ryan Lortie <desrt@desrt.ca>
  */
 
 /**
@@ -64,19 +68,9 @@
 #define O_BINARY 0
 #endif
 
-typedef enum {
-  G_SUBPROCESS_STREAM_DISPOSITION_DEVNULL = 0,
-  G_SUBPROCESS_STREAM_DISPOSITION_INHERIT = 1,
-  G_SUBPROCESS_STREAM_DISPOSITION_PIPE = 2,
-  G_SUBPROCESS_STREAM_DISPOSITION_MERGE_STDOUT
-#define G_SUBPROCESS_STREAM_DISPOSITION_LAST (G_SUBPROCESS_STREAM_DISPOSITION_MERGE_STDOUT)
-} GSubprocessStreamDispositionKind;
-
-static GObject * get_disposition (GSubprocessStreamDispositionKind kind);
-
 static void initable_iface_init (GInitableIface         *initable_iface);
 
-typedef struct _GSubprocessClass GSubprocessClass;
+typedef GObjectClass GSubprocessClass;
 
 #ifdef G_OS_UNIX
 static void
@@ -89,48 +83,34 @@ struct _GSubprocessStreamDispositionClass {
   GObjectClass parent_class;
 };
 
-struct _GSubprocessClass {
-  GObjectClass parent_class;
-};
-
 struct _GSubprocess
 {
   GObject parent;
 
+  GSubprocessFlags flags;
   char **argv;
-  GSpawnFlags spawn_flags;
   char **envp;
   char *cwd;
-  GSpawnChildSetupFunc child_setup;
-  gpointer child_setup_user_data;
-  GObject *stdin_disposition;
-  GObject *stdout_disposition;
-  GObject *stderr_disposition;
-
   GPid pid;
-  guint reaped_child : 1;
-  guint merge_stderr_to_stdout : 1;
-  guint reserved : 30;
 
-  int internal_stdin_fd;
-  int internal_stdout_fd;
-  int internal_stderr_fd;
+  /* These are the objects that are passed in to the constructor for the
+   * stdin, stdout and stderr properties (ie: GFileDescriptorBased or
+   * GFile).
+   */
+  GObject *stdin;
+  GObject *stdout;
+  GObject *stderr;
 
-  GOutputStream *stdin_stream;
-  GInputStream *stdout_stream;
-  GInputStream *stderr_stream;
-};
+  gboolean reaped_child;
 
-struct _GSubprocessStreamDisposition
-{
-  GObject parent;
-  GSubprocessStreamDispositionKind kind;
+  /* These are the streams created if a pipe is requested via flags. */
+  GOutputStream *stdin_pipe;
+  GInputStream  *stdout_pipe;
+  GInputStream  *stderr_pipe;
 };
 
 G_DEFINE_TYPE_WITH_CODE (GSubprocess, g_subprocess, G_TYPE_OBJECT,
-			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init));
-
-G_DEFINE_TYPE (GSubprocessStreamDisposition, g_subprocess_stream_disposition, G_TYPE_OBJECT);
+                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init));
 
 enum
 {
@@ -138,29 +118,18 @@ enum
   PROP_ARGV,
   PROP_WORKING_DIRECTORY,
   PROP_ENVIRONMENT,
-  PROP_SPAWN_FLAGS,
-  PROP_CHILD_SETUP_FUNC,
-  PROP_CHILD_SETUP_USER_DATA,
-  PROP_STDIN_DISPOSITION,
-  PROP_STDOUT_DISPOSITION,
-  PROP_STDERR_DISPOSITION
+  PROP_FLAGS,
+  PROP_STDIN,
+  PROP_STDOUT,
+  PROP_STDERR,
+  N_PROPS
 };
+
+static GParamSpec *g_subprocess_pspecs[N_PROPS];
 
 static void
 g_subprocess_init (GSubprocess  *self)
 {
-  self->stdin_disposition = get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_DEVNULL);
-  self->stdout_disposition = get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_INHERIT);
-  self->stderr_disposition = get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_INHERIT);
-  self->internal_stdin_fd = -1;
-  self->internal_stdout_fd = -1;
-  self->internal_stderr_fd = -1;
-}
-
-static void
-g_subprocess_stream_disposition_init (GSubprocessStreamDisposition *self)
-{
-  self->kind = G_SUBPROCESS_STREAM_DISPOSITION_INHERIT;
 }
 
 static void
@@ -178,13 +147,13 @@ g_subprocess_finalize (GObject *object)
 #endif
   g_spawn_close_pid (self->pid);
 
-  g_clear_object (&self->stdin_disposition);
-  g_clear_object (&self->stdout_disposition);
-  g_clear_object (&self->stderr_disposition);
+  g_clear_object (&self->stdin);
+  g_clear_object (&self->stdout);
+  g_clear_object (&self->stderr);
 
-  g_clear_object (&self->stdin_stream);
-  g_clear_object (&self->stdout_stream);
-  g_clear_object (&self->stderr_stream);
+  g_clear_object (&self->stdin);
+  g_clear_object (&self->stdout);
+  g_clear_object (&self->stderr);
 
   g_strfreev (self->argv);
   g_strfreev (self->envp);
@@ -196,9 +165,9 @@ g_subprocess_finalize (GObject *object)
 
 static void
 g_subprocess_set_property (GObject      *object,
-			   guint         prop_id,
-			   const GValue *value,
-			   GParamSpec   *pspec)
+                           guint         prop_id,
+                           const GValue *value,
+                           GParamSpec   *pspec)
 {
   GSubprocess *self = G_SUBPROCESS (object);
 
@@ -216,28 +185,20 @@ g_subprocess_set_property (GObject      *object,
       self->envp = g_value_dup_boxed (value);
       break;
 
-    case PROP_SPAWN_FLAGS:
-      self->spawn_flags = g_value_get_flags (value);
+    case PROP_FLAGS:
+      self->flags = g_value_get_flags (value);
       break;
 
-    case PROP_CHILD_SETUP_FUNC:
-      self->child_setup = g_value_get_pointer (value);
+    case PROP_STDIN:
+      self->stdin = g_value_dup_object (value);
       break;
 
-    case PROP_CHILD_SETUP_USER_DATA:
-      self->child_setup_user_data = g_value_get_pointer (value);
+    case PROP_STDOUT:
+      self->stdout = g_value_dup_object (value);
       break;
 
-    case PROP_STDIN_DISPOSITION:
-      self->stdin_disposition = g_value_dup_object (value);
-      break;
-
-    case PROP_STDOUT_DISPOSITION:
-      self->stdout_disposition = g_value_dup_object (value);
-      break;
-
-    case PROP_STDERR_DISPOSITION:
-      self->stderr_disposition = g_value_dup_object (value);
+    case PROP_STDERR:
+      self->stderr = g_value_dup_object (value);
       break;
 
     default:
@@ -247,16 +208,16 @@ g_subprocess_set_property (GObject      *object,
 
 static void
 g_subprocess_get_property (GObject    *object,
-			   guint       prop_id,
-			   GValue     *value,
-			   GParamSpec *pspec)
+                           guint       prop_id,
+                           GValue     *value,
+                           GParamSpec *pspec)
 {
   GSubprocess *self = G_SUBPROCESS (object);
 
   switch (prop_id)
     {
     case PROP_ARGV:
-      g_value_set_boxed (value, (gpointer)self->argv);
+      g_value_set_boxed (value, self->argv);
       break;
 
     case PROP_WORKING_DIRECTORY:
@@ -264,31 +225,23 @@ g_subprocess_get_property (GObject    *object,
       break;
 
     case PROP_ENVIRONMENT:
-      g_value_set_boxed (value, (gpointer)self->envp);
+      g_value_set_boxed (value, self->envp);
       break;
 
-    case PROP_SPAWN_FLAGS:
-      g_value_set_flags (value, self->spawn_flags);
+    case PROP_FLAGS:
+      g_value_set_flags (value, self->flags);
       break;
 
-    case PROP_CHILD_SETUP_FUNC:
-      g_value_set_pointer (value, self->child_setup);
+    case PROP_STDIN:
+      g_value_set_object (value, self->stdin);
       break;
 
-    case PROP_CHILD_SETUP_USER_DATA:
-      g_value_set_pointer (value, self->child_setup_user_data);
+    case PROP_STDOUT:
+      g_value_set_object (value, self->stdout);
       break;
 
-    case PROP_STDIN_DISPOSITION:
-      g_value_set_object (value, self->stdin_disposition);
-      break;
-
-    case PROP_STDOUT_DISPOSITION:
-      g_value_set_object (value, self->stdout_disposition);
-      break;
-
-    case PROP_STDERR_DISPOSITION:
-      g_value_set_object (value, self->stderr_disposition);
+    case PROP_STDERR:
+      g_value_set_object (value, self->stderr);
       break;
 
     default:
@@ -314,12 +267,9 @@ g_subprocess_class_init (GSubprocessClass *class)
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_ARGV,
-				   g_param_spec_boxed ("argv",
-						       P_("Arguments"),
-						       P_("Argument list"),
-						       G_TYPE_STRV,
-						       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_ARGV] = g_param_spec_boxed ("argv", P_("Arguments"), P_("Argument list"), G_TYPE_STRV,
+                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_STATIC_STRINGS);
 
   /**
    * GSubprocess:working-directory:
@@ -330,12 +280,10 @@ g_subprocess_class_init (GSubprocessClass *class)
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_WORKING_DIRECTORY,
-				   g_param_spec_string ("working-directory",
-							P_("Working Directory"),
-							P_("Path to working directory"),
-							NULL,
-							G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_WORKING_DIRECTORY] = g_param_spec_string ("working-directory", P_("Working Directory"),
+                                                                     P_("Path to working directory"), NULL,
+                                                                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                                     G_PARAM_STATIC_STRINGS);
 
   /**
    * GSubprocess:environment:
@@ -345,12 +293,10 @@ g_subprocess_class_init (GSubprocessClass *class)
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_ENVIRONMENT,
-				   g_param_spec_boxed ("environment",
-						       P_("Environment"),
-						       P_("Environment for child process"),
-						       G_TYPE_STRV,
-						       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_ENVIRONMENT] = g_param_spec_boxed ("environment", P_("Environment"),
+                                                              P_("Environment for child process"), G_TYPE_STRV,
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS);
 
   /**
    * GSubprocess:spawn-flags:
@@ -359,89 +305,45 @@ g_subprocess_class_init (GSubprocessClass *class)
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_SPAWN_FLAGS,
-				   g_param_spec_flags ("spawn-flags",
-						       P_("Spawn Flags"),
-						       P_("Additional flags conrolling the subprocess"),
-						       G_TYPE_SPAWN_FLAGS, 0,
-						       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-
+  g_subprocess_pspecs[PROP_FLAGS] = g_param_spec_flags ("flags", P_("Spawn Flags"),
+                                                        P_("Additional flags conrolling the subprocess"),
+                                                        G_TYPE_SUBPROCESS_FLAGS, 0, G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
-   * GSubprocess:child-setup-func:
-   *
-   * Only available on Unix; this function will be invoked between
-   * <literal>fork()</literal> and <literal>exec()</literal>.  See the
-   * documentation of g_spawn_async_with_pipes() for more details.
-   *
-   * Since: 2.34
-   */
-  g_object_class_install_property (gobject_class, PROP_CHILD_SETUP_FUNC,
-				   g_param_spec_pointer ("child-setup-func",
-							 P_("Setup"),
-							 P_("Child setup function"),
-							 G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-
-  /**
-   * GSubprocess:child-setup-user-data:
-   *
-   * User data passed to the %GSubprocess:child-setup-func.
-   *
-   * Since: 2.34
-   */
-  g_object_class_install_property (gobject_class, PROP_CHILD_SETUP_USER_DATA,
-				   g_param_spec_pointer ("child-setup-user-data",
-							 P_("Data"),
-							 P_("Child setup user data"),
-							 G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-
-  /**
-   * GSubprocess:stdin-disposition:
+   * GSubprocess:stdin:
    *
    * Controls the direction of standard input.
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_STDIN_DISPOSITION,
-				   g_param_spec_object ("stdin-disposition",
-							P_("Stdin"),
-							P_("Disposition of standard input"),
-							G_TYPE_OBJECT,
-							G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_STDIN] = g_param_spec_object ("stdin", P_("Stdin"), P_("Disposition of standard input"),
+                                                         G_TYPE_OBJECT, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                         G_PARAM_STATIC_STRINGS);
 
   /**
-   * GSubprocess:stdout-disposition:
+   * GSubprocess:stdout:
    *
    * Controls the direction of standard output.
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_STDOUT_DISPOSITION,
-				   g_param_spec_object ("stdout-disposition",
-							P_("Stdout"),
-							P_("Disposition of standard output"),
-							G_TYPE_OBJECT,
-							G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_STDOUT] = g_param_spec_object ("stdout", P_("Stdout"), P_("Disposition of standard output"),
+                                                          G_TYPE_OBJECT, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                          G_PARAM_STATIC_STRINGS);
 
   /**
-   * GSubprocess:stderr-disposition:
+   * GSubprocess:stderr:
    *
    * Controls the direction of standard error.
    *
    * Since: 2.34
    */
-  g_object_class_install_property (gobject_class, PROP_STDERR_DISPOSITION,
-				   g_param_spec_object ("stderr-disposition",
-							P_("Stderr"),
-							P_("Disposition of standard error"),
-							G_TYPE_OBJECT,
-							G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+  g_subprocess_pspecs[PROP_STDERR] = g_param_spec_object ("stderr", P_("Stderr"), P_("Disposition of standard error"),
+                                                          G_TYPE_OBJECT, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
+                                                          G_PARAM_STATIC_STRINGS);
 
-}
-
-static void
-g_subprocess_stream_disposition_class_init (GSubprocessStreamDispositionClass  *klass)
-{
+  g_object_class_install_properties (gobject_class, N_PROPS, g_subprocess_pspecs);
 }
 
 #ifdef G_OS_UNIX
@@ -457,7 +359,7 @@ g_subprocess_unix_queue_waitpid (GSubprocess  *self)
 {
   GMainContext *worker_context;
   GSource *waitpid_source;
-  
+
   worker_context = GLIB_PRIVATE_CALL (g_get_worker_context) ();
   waitpid_source = g_child_watch_source_new (self->pid); 
   g_source_set_callback (waitpid_source, g_subprocess_unix_waitpid_dummy, NULL, NULL);
@@ -465,345 +367,267 @@ g_subprocess_unix_queue_waitpid (GSubprocess  *self)
   g_source_unref (waitpid_source);
 }
 
-static void
-safe_dup2 (gint   a,
-	   gint   b)
-{
-  gint ecode;
-
-  if (a == b)
-    return;
-
-  do
-    ecode = dup2 (a, b);
-  while (ecode == -1 && errno == EINTR);
-}
-
-static void
-g_subprocess_internal_child_setup (gpointer        user_data)
-{
-  GSubprocess *self = user_data;
-
-  if (self->internal_stdin_fd >= 0)
-    safe_dup2 (self->internal_stdin_fd, 0);
-
-  if (self->internal_stdout_fd >= 0)
-    safe_dup2 (self->internal_stdout_fd, 1);
-
-  if (self->internal_stderr_fd >= 0)
-    safe_dup2 (self->internal_stderr_fd, 2);
-
-  if (self->merge_stderr_to_stdout)
-    safe_dup2 (1, 2);
-
-  if (self->child_setup)
-    self->child_setup (self->child_setup_user_data);
-}
-
 #endif
 
 static GInputStream *
-platform_input_stream_from_spawn_fd (gint         fd)
+platform_input_stream_from_spawn_fd (gint fd)
 {
+  if (fd < 0)
+    return NULL;
+
 #ifdef G_OS_UNIX
   return g_unix_input_stream_new (fd, TRUE);
 #else
   return g_win32_input_stream_new_from_fd (fd, TRUE);
-#endif  
+#endif
 }
 
 static GOutputStream *
-platform_output_stream_from_spawn_fd (gint         fd)
+platform_output_stream_from_spawn_fd (gint fd)
 {
+  if (fd < 0)
+    return NULL;
+
 #ifdef G_OS_UNIX
   return g_unix_output_stream_new (fd, TRUE);
 #else
   return g_win32_output_stream_new_from_fd (fd, TRUE);
-#endif  
+#endif
 }
-
-static void
-set_open_error (const char *filename,
-		GError    **error)
-{
-  int errsv = errno;
-  char *display_name = g_filename_display_name (filename);
-  g_set_error (error, G_IO_ERROR,
-	       g_io_error_from_errno (errsv),
-	       _("Error opening file '%s': %s"),
-	       display_name, g_strerror (errsv));
-  g_free (display_name);
-
-}
-
-static int
-open_file_write_append (const char *filename,
-			GError    **error)
-{
-  int fd;
-
-  fd = g_open (filename, O_WRONLY | O_CREAT | O_BINARY, 0666);
-  if (fd == -1)
-    {
-      set_open_error (filename, error);
-      return -1;
-    }
-  return fd;
-}
-
-static gboolean
-get_file_path_or_fail (GFile   *f,
-		       char   **out_path,
-		       GError **error)
-{
-  *out_path = g_file_get_path (f);
-  if (!*out_path)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-		   "File does not have a local path");
-      return FALSE;
-    }
-  return TRUE;
-}
-
-static void
-set_unsupported_stream_error (GObject  *object,
-			      GError  **error)
-{
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-	       "Unsupported stream type %s", g_type_name (G_OBJECT_TYPE (object)));
-}
-
-static gboolean
-unix_handle_open_fd_for_write (GObject   *disposition,
-			       gboolean  *out_supported,
-			       gint      *out_fd,
-			       gboolean  *out_close_fd,
-			       GError   **error)
-{
-  gboolean ret = FALSE;
-  char *temp_path = NULL;
 
 #ifdef G_OS_UNIX
-  if (G_IS_FILE_DESCRIPTOR_BASED (disposition))
-    {
-      *out_fd = g_file_descriptor_based_get_fd ((GFileDescriptorBased*) disposition);
-      *out_close_fd = FALSE;
-      *out_supported = TRUE;
-    }
-  else if (G_IS_FILE (disposition))
-    {
-      if (!get_file_path_or_fail ((GFile*)disposition, &temp_path, error))
-	goto out;
-	
-      *out_fd = open_file_write_append (temp_path, error);
-      if (*out_fd == -1)
-	goto out;
-      *out_close_fd = TRUE;
-      *out_supported = TRUE;
-    }
-  else
-    *out_supported = FALSE;
+static gint
+unix_open_file (GFile   *file,
+                gint     mode,
+                GError **error)
+{
+  gchar *filename;
+  gint my_fd;
 
-  ret = TRUE;
- out:
-  g_clear_pointer (&temp_path, g_free);
-  return ret;
-#else
-  *out_supported = FALSE;
+  filename = g_file_get_path (file);
+
+  if (filename == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, _("File does not have a local path"));
+      return -1;
+    }
+
+  my_fd = g_open (filename, mode | O_BINARY | O_CLOEXEC, 0666);
+
+  /* If we return -1 we should also set the error */
+  if (my_fd < 0)
+    {
+      gint saved_errno = errno;
+      char *display_name;
+
+      display_name = g_filename_display_name (filename);
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (saved_errno),
+                   _("Error opening file '%s': %s"), display_name,
+                   g_strerror (saved_errno));
+      g_free (display_name);
+      /* fall through... */
+    }
+
+  g_free (filename);
+
+  return my_fd;
+}
+
+static gboolean
+unix_get_fd_for_object_read (GObject   *object,
+                             gint      *fd,
+                             gint      *close_fd,
+                             GError   **error)
+{
+  gint my_fd;
+
+  if (G_IS_FILE_DESCRIPTOR_BASED (object))
+    {
+      *fd = g_file_descriptor_based_get_fd (G_FILE_DESCRIPTOR_BASED (object));
+      return TRUE;
+    }
+
+  g_assert (G_IS_FILE (object));
+
+  my_fd = unix_open_file (G_FILE (object), O_RDONLY, error);
+
+  if (my_fd < 0)
+    return FALSE;
+
+  *fd = *close_fd = my_fd;
+
   return TRUE;
+}
+
+static gboolean
+unix_get_fd_for_object_write (GObject   *object,
+                              gint      *fd,
+                              gint      *close_fd,
+                              GError   **error)
+{
+  gint my_fd;
+
+  if (G_IS_FILE_DESCRIPTOR_BASED (object))
+    {
+      *fd = g_file_descriptor_based_get_fd (G_FILE_DESCRIPTOR_BASED (object));
+      return TRUE;
+    }
+
+  g_assert (G_IS_FILE (object));
+
+  my_fd = unix_open_file (G_FILE (object), O_CREAT | O_WRONLY, error);
+
+  if (my_fd < 0)
+    return FALSE;
+
+  *fd = *close_fd = my_fd;
+
+  return TRUE;
+}
+#endif
+
+typedef struct
+{
+  gint             fds[3];
+  GSubprocessFlags flags;
+} ChildData;
+
+static void
+child_setup (gpointer user_data)
+{
+  ChildData *child_data = user_data;
+  gint i;
+
+  /* We're on the child side now.  "Rename" the file descriptors in
+   * child_data.fds[] to stdin/stdout/stderr.
+   *
+   * We don't close the originals.  It's possible that the originals
+   * should not be closed and if they should be closed then they should
+   * have been created O_CLOEXEC.
+   */
+  for (i = 0; i < 3; i++)
+    if (child_data->fds[i] != -1 && child_data->fds[i] != i)
+      {
+        gint result;
+
+        do
+          result = dup2 (child_data->fds[i], i);
+        while (result == -1 && errno == EINTR);
+      }
+
+  if (child_data->flags & G_SUBPROCESS_FLAGS_TERM_WITH_PARENT)
+    /* XXX linux thing... */;
+
+#ifdef G_OS_UNIX
+  if (child_data->flags & G_SUBPROCESS_FLAGS_NEW_SESSION)
+    setsid ();
 #endif
 }
 
 static gboolean
 initable_init (GInitable     *initable,
-	       GCancellable  *cancellable,
-	       GError       **error)
+               GCancellable  *cancellable,
+               GError       **error)
 {
   GSubprocess *self = G_SUBPROCESS (initable);
-  gboolean ret = FALSE;
-  char *temp_path = NULL;
-  gint stdin_pipe_fd = -1;
-  gint *stdin_arg = NULL;
-  gint stdout_pipe_fd = -1;
-  gint *stdout_arg = NULL;
-  gint stderr_pipe_fd = -1;
-  gint *stderr_arg = NULL;
-  gboolean disposition_supported;
-  GSpawnChildSetupFunc child_setup;
-  gpointer child_setup_user_data;
-  gboolean close_stdin_fd = FALSE;
-  gboolean close_stdout_fd = FALSE;
-  gboolean close_stderr_fd = FALSE;
+  ChildData child_data = { { -1, -1, -1 } };
+  gint *pipe_ptrs[3] = { NULL, NULL, NULL };
+  gint pipe_fds[3] = { -1, -1, -1 };
+  gint close_fds[3] = { -1, -1, -1 };
+  GSpawnFlags spawn_flags = 0;
+  gboolean success = FALSE;
+  gint i;
 
   g_return_val_if_fail (self->argv && self->argv[0], FALSE);
-
-  if (self->stdin_disposition == NULL)
-    self->stdin_disposition = g_object_ref (g_subprocess_stream_devnull ());
-  if (self->stdout_disposition == NULL)
-    self->stdout_disposition = g_object_ref (g_subprocess_stream_inherit ());
-  if (self->stderr_disposition == NULL)
-    self->stderr_disposition = g_object_ref (g_subprocess_stream_inherit ());
-
-  if (self->spawn_flags & G_SPAWN_CHILD_INHERITS_STDIN)
-    {
-      g_clear_object (&self->stdin_disposition);
-      self->stdin_disposition = g_subprocess_stream_inherit ();
-    }
-  if (self->spawn_flags & G_SPAWN_STDOUT_TO_DEV_NULL)
-    {
-      g_clear_object (&self->stdout_disposition);
-      self->stdout_disposition = g_subprocess_stream_devnull ();
-    }
-  if (self->spawn_flags & G_SPAWN_STDERR_TO_DEV_NULL)
-    {
-      g_clear_object (&self->stderr_disposition);
-      self->stderr_disposition = g_subprocess_stream_devnull ();
-    }
-
-  /* We always use this one */
-  self->spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
-
+  g_return_val_if_fail (!!(self->stdin) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDIN_INHERIT) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDIN_PIPE) < 2, FALSE);
+  g_return_val_if_fail (!!(self->stdout) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDOUT_SILENCE) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDOUT_PIPE) < 2, FALSE);
+  g_return_val_if_fail (!!(self->stderr) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDERR_SILENCE) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDERR_PIPE) +
+                        !!(self->flags & G_SUBPROCESS_FLAGS_STDERR_MERGE) < 2, FALSE);
 #ifdef G_OS_UNIX
-  child_setup = g_subprocess_internal_child_setup;
-  child_setup_user_data = self;
+  g_return_val_if_fail (!self->stdin || G_IS_FILE (self->stdin) || G_IS_FILE_DESCRIPTOR_BASED (self->stdin), FALSE);
+  g_return_val_if_fail (!self->stdout || G_IS_FILE (self->stdout) || G_IS_FILE_DESCRIPTOR_BASED (self->stdout), FALSE);
+  g_return_val_if_fail (!self->stderr || G_IS_FILE (self->stderr) || G_IS_FILE_DESCRIPTOR_BASED (self->stderr), FALSE);
 #else
-  child_setup = NULL;
-  child_setup_user_data = NULL;
+  g_return_val_if_fail (self->stdin == NULL, FALSE);
+  g_return_val_if_fail (self->stdout == NULL, FALSE);
+  g_return_val_if_fail (self->stderr == NULL, FALSE);
 #endif
 
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
+  /* We must setup the three fds that will end up in the child as stdin,
+   * stdout and stderr.
+   *
+   * First, stdin.
+   */
+  if (self->flags & G_SUBPROCESS_FLAGS_STDIN_INHERIT)
+    spawn_flags |= G_SPAWN_CHILD_INHERITS_STDIN;
+  else if (self->flags & G_SUBPROCESS_FLAGS_STDIN_PIPE)
+    pipe_ptrs[0] = &pipe_fds[0];
 #ifdef G_OS_UNIX
-  if (G_IS_FILE_DESCRIPTOR_BASED (self->stdin_disposition))
-    {
-      self->internal_stdin_fd = g_file_descriptor_based_get_fd ((GFileDescriptorBased*) self->stdin_disposition);
-    }
-  else if (G_IS_FILE (self->stdin_disposition))
-    {
-      if (!get_file_path_or_fail ((GFile*)self->stdin_disposition, &temp_path, error))
-	goto out;
-	
-      self->internal_stdin_fd = g_open (temp_path, O_RDONLY | O_BINARY, 0);
-      if (self->internal_stdin_fd == -1)
-	{
-	  set_open_error (temp_path, error);
-	  goto out;
-	}
-      close_stdin_fd = TRUE;
-
-      g_clear_pointer (&temp_path, g_free);
-    }
-  else
-#endif
-  if (self->stdin_disposition == g_subprocess_stream_devnull ())
-    {
-      /* Default */
-    }
-  else if (self->stdin_disposition == g_subprocess_stream_inherit ())
-    {
-      self->spawn_flags |= G_SPAWN_CHILD_INHERITS_STDIN;
-    }
-  else if (self->stdin_disposition == g_subprocess_stream_pipe ())
-    {
-      stdin_arg = &stdin_pipe_fd;
-    }
-  else
-    {
-      set_unsupported_stream_error (self->stdin_disposition, error);
+  else if (self->stdin)
+    if (!unix_get_fd_for_object_read (self->stdin, &child_data.fds[0], &close_fds[0], error))
       goto out;
-    }
-
-  /* Handle stdout */
-
-  if (!unix_handle_open_fd_for_write (self->stdout_disposition,
-				      &disposition_supported,
-				      &self->internal_stdout_fd,
-				      &close_stdout_fd,
-				      error))
-    goto out;
-  else if (!disposition_supported)
-    {
-      if (self->stdout_disposition == g_subprocess_stream_devnull ())
-	{
-	  self->spawn_flags |= G_SPAWN_STDOUT_TO_DEV_NULL;
-	}
-      else if (self->stdout_disposition == g_subprocess_stream_inherit ())
-	{
-	  /* Default */
-	}
-      else if (self->stdout_disposition == g_subprocess_stream_pipe ())
-	{
-	  stdout_arg = &stdout_pipe_fd;
-	}
-      else
-	{
-	  set_unsupported_stream_error (self->stdout_disposition, error);
-	  goto out;
-	}
-    }
-
-  /* Handle stderr */
-
-  if (!unix_handle_open_fd_for_write (self->stderr_disposition,
-				      &disposition_supported,
-				      &self->internal_stderr_fd,
-				      &close_stderr_fd,
-				      error))
-    goto out;
-  else if (!disposition_supported)
-    {
-      if (self->stderr_disposition == g_subprocess_stream_devnull ())
-	{
-	  self->spawn_flags |= G_SPAWN_STDERR_TO_DEV_NULL;
-	}
-      else if (self->stderr_disposition == g_subprocess_stream_inherit ())
-	{
-	  /* Default */
-	}
-      else if (self->stderr_disposition == g_subprocess_stream_pipe ())
-	{
-	  stderr_arg = &stderr_pipe_fd;
-	}
-      else if (self->stderr_disposition == g_subprocess_stream_merge_stdout ())
-	{
-	  self->merge_stderr_to_stdout = TRUE;
-	}
-      else
-	{
-	  set_unsupported_stream_error (self->stderr_disposition, error);
-	  goto out;
-	}
-    }
-
-  if (!g_spawn_async_with_pipes (self->cwd,
-				 self->argv,
-				 self->envp,
-				 self->spawn_flags,
-				 child_setup, child_setup_user_data,
-				 &self->pid,
-				 stdin_arg, stdout_arg, stderr_arg,
-				 error))
-    goto out;
-
-  ret = TRUE;
-
-  if (stdin_pipe_fd != -1)
-    self->stdin_stream = platform_output_stream_from_spawn_fd (stdin_pipe_fd);
-  if (stdout_pipe_fd != -1)
-    self->stdout_stream = platform_input_stream_from_spawn_fd (stdout_pipe_fd);
-  if (stderr_pipe_fd != -1)
-    self->stderr_stream = platform_input_stream_from_spawn_fd (stderr_pipe_fd);
-
- out:
-  g_free (temp_path);
-#ifdef G_OS_UNIX
-  if (close_stdin_fd)
-    (void) close (self->internal_stdin_fd);
-  if (close_stdout_fd)
-    (void) close (self->internal_stdout_fd);
-  if (close_stderr_fd)
-    (void) close (self->internal_stderr_fd);
 #endif
-  return ret;
+
+  /* Next, stdout. */
+  if (self->flags & G_SUBPROCESS_FLAGS_STDOUT_SILENCE)
+    spawn_flags |= G_SPAWN_STDOUT_TO_DEV_NULL;
+  else if (self->flags & G_SUBPROCESS_FLAGS_STDOUT_PIPE)
+    pipe_ptrs[1] = &pipe_fds[1];
+#ifdef G_OS_UNIX
+  else if (self->stdout)
+    if (!unix_get_fd_for_object_write (self->stdout, &child_data.fds[1], &close_fds[1], error))
+      goto out;
+#endif
+
+  /* Finally, stderr. */
+  if (self->flags & G_SUBPROCESS_FLAGS_STDERR_SILENCE)
+    spawn_flags |= G_SPAWN_STDERR_TO_DEV_NULL;
+  else if (self->flags & G_SUBPROCESS_FLAGS_STDERR_PIPE)
+    pipe_ptrs[2] = &pipe_fds[2];
+  else if (self->flags & G_SUBPROCESS_FLAGS_STDERR_MERGE)
+    /* This will work because stderr gets setup after stdout. */
+    child_data.fds[2] = 1;
+#ifdef G_OS_UNIX
+  else if (self->stderr)
+    if (!unix_get_fd_for_object_write (self->stderr, &child_data.fds[2], &close_fds[2], error))
+      goto out;
+#endif
+
+  spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
+
+  if (self->flags & G_SUBPROCESS_FLAGS_SEARCH_PATH)
+    spawn_flags |= G_SPAWN_SEARCH_PATH;
+
+  spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
+  spawn_flags |= G_SPAWN_CLOEXEC_PIPES;
+
+  child_data.flags = self->flags;
+  success = g_spawn_async_with_pipes (self->cwd, self->argv, self->envp,
+                                      spawn_flags,
+                                      child_setup, &child_data,
+                                      &self->pid,
+                                      pipe_ptrs[0], pipe_ptrs[1], pipe_ptrs[2],
+                                      error);
+
+out:
+  for (i = 0; i < 3; i++)
+    if (close_fds[i] != -1)
+      close (close_fds[i]);
+
+  self->stdin_pipe = platform_output_stream_from_spawn_fd (pipe_fds[0]);
+  self->stdout_pipe = platform_input_stream_from_spawn_fd (pipe_fds[1]);
+  self->stderr_pipe = platform_input_stream_from_spawn_fd (pipe_fds[2]);
+
+  return success;
 }
 
 static void
@@ -822,30 +646,20 @@ initable_iface_init (GInitableIface *initable_iface)
  * Since: 2.34
  */
 GLIB_AVAILABLE_IN_2_34
-GSubprocess *    g_subprocess_new (gchar                **argv,
-				   const gchar           *cwd,
-				   gchar                **env,
-				   GSpawnFlags            spawn_flags,
-				   GSpawnChildSetupFunc   child_setup,
-				   gpointer               user_data,
-				   GObject               *stdin_disposition,
-				   GObject               *stdout_disposition,
-				   GObject               *stderr_disposition,
-				   GError               **error)
+GSubprocess *
+g_subprocess_new (const gchar          *cwd,
+                  const gchar * const  *argv,
+                  const gchar * const  *env,
+                  GSubprocessFlags      flags,
+                  GError              **error)
 {
   return g_initable_new (G_TYPE_SUBPROCESS,
-			 NULL,
-			 error,
-			 "argv", argv,
-			 "working-directory", cwd,
-			 "environment", env,
-			 "spawn-flags", spawn_flags,
-			 "child-setup-func", child_setup,
-			 "child-setup-user-data", user_data,
-			 "stdin-disposition", stdin_disposition,
-			 "stdout-disposition", stdout_disposition,
-			 "stderr-disposition", stderr_disposition,
-			 NULL);
+                         NULL, error,
+                         "argv", argv,
+                         "working-directory", cwd,
+                         "environment", env,
+                         "flags", flags,
+                         NULL);
 }
 
 /**
@@ -876,80 +690,35 @@ GPid
 g_subprocess_get_pid (GSubprocess     *self)
 {
   g_return_val_if_fail (G_IS_SUBPROCESS (self), 0);
-  
+
   return self->pid;
-}
-
-static GObject *
-get_disposition (GSubprocessStreamDispositionKind kind)
-{
-  static gsize initialized = 0;
-  static GPtrArray* dispositions = NULL;
-  
-  if (g_once_init_enter (&initialized))
-    {
-      int i;
-      dispositions = g_ptr_array_new_with_free_func ((GDestroyNotify)g_object_unref);
-      for (i = 0; i < G_SUBPROCESS_STREAM_DISPOSITION_LAST+1; i++)
-	{
-	  GSubprocessStreamDisposition *disposition = g_object_new (g_subprocess_stream_disposition_get_type (), NULL);
-	  disposition->kind = (GSubprocessStreamDispositionKind)i;
-	  g_ptr_array_add (dispositions, disposition);
-	}
-      g_once_init_leave (&initialized, TRUE);
-    }
-  return dispositions->pdata[(guint)kind];
-}
-
-GObject *
-g_subprocess_stream_devnull (void)
-{
-  return get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_DEVNULL);
-}
-
-GObject *
-g_subprocess_stream_inherit (void)
-{
-  return get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_INHERIT);
-}
-
-GObject *
-g_subprocess_stream_pipe (void)
-{
-  return get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_PIPE);
-}
-
-GObject *
-g_subprocess_stream_merge_stdout (void)
-{
-  return get_disposition (G_SUBPROCESS_STREAM_DISPOSITION_MERGE_STDOUT);
 }
 
 GOutputStream *
 g_subprocess_get_stdin_pipe (GSubprocess       *self)
 {
   g_return_val_if_fail (G_IS_SUBPROCESS (self), NULL);
-  g_return_val_if_fail (self->stdin_disposition == g_subprocess_stream_pipe (), NULL);
+  g_return_val_if_fail (self->stdin_pipe, NULL);
 
-  return self->stdin_stream;
+  return self->stdin_pipe;
 }
 
 GInputStream *
 g_subprocess_get_stdout_pipe (GSubprocess      *self)
 {
   g_return_val_if_fail (G_IS_SUBPROCESS (self), NULL);
-  g_return_val_if_fail (self->stdout_disposition == g_subprocess_stream_pipe (), NULL);
+  g_return_val_if_fail (self->stdout_pipe, NULL);
 
-  return self->stdout_stream;
+  return self->stdout_pipe;
 }
 
 GInputStream *
 g_subprocess_get_stderr_pipe (GSubprocess      *self)
 {
   g_return_val_if_fail (G_IS_SUBPROCESS (self), NULL);
-  g_return_val_if_fail (self->stderr_disposition == g_subprocess_stream_pipe (), NULL);
+  g_return_val_if_fail (self->stderr_pipe, NULL);
 
-  return self->stderr_stream;
+  return self->stderr_pipe;
 }
 
 typedef struct {
@@ -1216,7 +985,7 @@ g_subprocess_wait_sync_check (GSubprocess        *self,
  * Since: 2.34
  */
 gboolean
-g_subprocess_request_exit (GSubprocess       *self)
+g_subprocess_request_exit (GSubprocess *self)
 {
   g_return_val_if_fail (G_IS_SUBPROCESS (self), FALSE);
 
@@ -1240,8 +1009,8 @@ g_subprocess_request_exit (GSubprocess       *self)
  *
  * On Unix, this function sends %SIGKILL.
  */
-void             
-g_subprocess_force_exit (GSubprocess       *self)
+void
+g_subprocess_force_exit (GSubprocess *self)
 {
   g_return_if_fail (G_IS_SUBPROCESS (self));
 

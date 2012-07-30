@@ -53,11 +53,7 @@ test_noop (void)
   GSubprocess *proc;
 
   args = get_test_subprocess_args ("noop", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const char**) args->pdata, NULL, 0, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -76,11 +72,7 @@ test_noop_all_to_null (void)
   GSubprocess *proc;
 
   args = get_test_subprocess_args ("noop", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_devnull (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL, 0, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -99,11 +91,7 @@ test_noop_no_wait (void)
   GSubprocess *proc;
 
   args = get_test_subprocess_args ("noop", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL, 0, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
   
@@ -119,11 +107,7 @@ test_noop_stdin_inherit (void)
   GSubprocess *proc;
 
   args = get_test_subprocess_args ("noop", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL, 0, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -146,11 +130,7 @@ test_search_path (void)
   args = g_ptr_array_new ();
   g_ptr_array_add (args, "true");
   g_ptr_array_add (args, NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const char **) args->pdata, NULL, G_SUBPROCESS_FLAGS_SEARCH_PATH, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -170,11 +150,7 @@ test_exit1 (void)
   GSubprocess *proc;
 
   args = get_test_subprocess_args ("exit1", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const char **) args->pdata, NULL, G_SUBPROCESS_FLAGS_NONE, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -219,11 +195,7 @@ test_echo1 (void)
   gchar *result;
 
   args = get_test_subprocess_args ("echo", "hello", "world!", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_pipe (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL, G_SUBPROCESS_FLAGS_STDOUT_PIPE, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -250,11 +222,8 @@ test_echo_merged (void)
   gchar *result;
 
   args = get_test_subprocess_args ("echo-stdout-and-stderr", "merge", "this", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_pipe (),
-			   g_subprocess_stream_merge_stdout (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL,
+                           G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -309,11 +278,9 @@ test_cat_utf8 (void)
   data.loop = g_main_loop_new (NULL, TRUE);
 
   args = get_test_subprocess_args ("cat", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_pipe (),
-			   g_subprocess_stream_pipe (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL,
+                           G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                           error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -352,165 +319,63 @@ test_cat_utf8 (void)
   g_object_unref (proc);
 }
 
-#ifdef G_OS_UNIX
-static void
-test_file_redirection (void)
+static gpointer
+cancel_soon (gpointer user_data)
 {
-  GError *local_error = NULL;
-  GError **error = &local_error;
-  char *expected_buf = NULL;
-  GSubprocess *proc;
-  GPtrArray *args;
-  GBytes *input_buf;
-  GBytes *output_buf;
-  GInputStream *input_buf_stream = NULL;
-  GOutputStream *output_buf_stream = NULL;
-  GOutputStream *stdin_stream = NULL;
-  GInputStream *stdout_stream = NULL;
-  GFile *temp_file = NULL;
-  GFileIOStream *temp_file_io = NULL;
-  TestCatData data;
+  GCancellable *cancellable = user_data;
 
-  memset (&data, 0, sizeof (data));
-  data.loop = g_main_loop_new (NULL, TRUE);
+  g_usleep (G_TIME_SPAN_SECOND);
+  g_cancellable_cancel (cancellable);
+  g_object_unref (cancellable);
 
-  expected_buf = g_strdup_printf ("this is a test file, written by pid:%lu at monotonic time:%" G_GUINT64_FORMAT,
-				  (gulong) getpid (), g_get_monotonic_time ());
-  
-  temp_file = g_file_new_tmp ("gsubprocess-tmpXXXXXX",
-			      &temp_file_io, error);
-  g_assert_no_error (local_error);
-
-  g_io_stream_close ((GIOStream*)temp_file_io, NULL, error);
-  g_assert_no_error (local_error);
-
-  args = get_test_subprocess_args ("cat", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_pipe (),
-			   (GObject*) temp_file,
-			   g_subprocess_stream_inherit (),
-			   error);
-  g_ptr_array_free (args, TRUE);
-  g_assert_no_error (local_error);
-
-  stdin_stream = g_subprocess_get_stdin_pipe (proc);
-
-  input_buf = g_bytes_new_take (expected_buf, strlen (expected_buf));
-  expected_buf = NULL;
-  input_buf_stream = g_memory_input_stream_new_from_bytes (input_buf);
-
-  g_output_stream_splice_async (stdin_stream, input_buf_stream, G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-				G_PRIORITY_DEFAULT, NULL, test_cat_on_input_splice_complete,
-				&data);
-  data.events_pending++;
-  
-  g_main_loop_run (data.loop);
-
-  g_subprocess_wait_sync_check (proc, NULL, error);
-  g_assert_no_error (local_error);
-
-  g_object_unref (proc);
-  g_object_unref (input_buf_stream);
-
-  args = get_test_subprocess_args ("cat", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   (GObject*)temp_file,
-			   g_subprocess_stream_pipe (),
-			   g_subprocess_stream_inherit (),
-			   error);
-  g_ptr_array_free (args, TRUE);
-  g_assert_no_error (local_error);
-
-  stdout_stream = g_subprocess_get_stdout_pipe (proc);
-  output_buf_stream = g_memory_output_stream_new (NULL, 0, g_realloc, g_free);
-
-  g_output_stream_splice_async (output_buf_stream, stdout_stream, G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-				G_PRIORITY_DEFAULT, NULL, test_cat_on_input_splice_complete,
-				&data);
-  data.events_pending++;
-  
-  g_main_loop_run (data.loop);
-
-  output_buf = g_memory_output_stream_steal_as_bytes ((GMemoryOutputStream*)output_buf_stream);
-  
-  g_assert_cmpint (g_bytes_get_size (output_buf), ==, g_bytes_get_size (input_buf));
-  g_assert_cmpint (memcmp (g_bytes_get_data (output_buf, NULL),
-			   g_bytes_get_data (input_buf, NULL), g_bytes_get_size (input_buf)), ==, 0);
-
-  g_bytes_unref (input_buf);
-  g_bytes_unref (output_buf);
-  g_main_loop_unref (data.loop);
-  g_object_unref (output_buf_stream);
-  g_object_unref (proc);
-  
-  g_file_delete (temp_file, NULL, error);
-  g_assert_no_error (local_error);
-  g_object_unref (temp_file);
-  g_object_unref (temp_file_io);
+  return NULL;
 }
 
 static void
-test_unix_fd_passing (void)
+test_cat_eof (void)
 {
-  GError *local_error = NULL;
-  GError **error = &local_error;
-  GSubprocess *proc;
-  GPtrArray *args;
-  GOutputStream *stdin;
-  GFile *temp_file = NULL;
-  GFileIOStream *temp_file_io = NULL;
-  GOutputStream *temp_file_out = NULL;
-  gsize bytes_written;
-  gchar *write_buf;
-  gchar *read_buf;
+  const gchar *args[] = { "cat", NULL };
+  GCancellable *cancellable;
+  GError *error = NULL;
+  GSubprocess *cat;
+  gint exit_status;
+  gboolean result;
+  gchar buffer;
+  gssize s;
 
-  temp_file = g_file_new_tmp ("gsubprocess-tmpXXXXXX",
-			      &temp_file_io, error);
+  /* Spawn 'cat' */
+  cat = g_subprocess_new (NULL, args, NULL, G_SUBPROCESS_FLAGS_SEARCH_PATH |
+                          G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE, &error);
+  g_assert_no_error (error);
+  g_assert (cat);
 
-  temp_file_out = g_io_stream_get_output_stream ((GIOStream*)temp_file_io);
-  g_assert (G_IS_FILE_DESCRIPTOR_BASED (temp_file_out));
+  /* Make sure that reading stdout blocks (until we cancel) */
+  cancellable = g_cancellable_new ();
+  g_thread_unref (g_thread_new ("cancel thread", cancel_soon, g_object_ref (cancellable)));
+  s = g_input_stream_read (g_subprocess_get_stdout_pipe (cat), &buffer, sizeof buffer, cancellable, &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+  g_assert_cmpint (s, ==, -1);
+  g_object_unref (cancellable);
+  g_clear_error (&error);
 
-  args = get_test_subprocess_args ("cat", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_pipe (),
-			   (GObject*)temp_file_out,
-			   g_subprocess_stream_inherit (),
-			   error);
-  g_ptr_array_free (args, TRUE);
-  g_assert_no_error (local_error);
+  /* Close the stream (EOF on cat's stdin) */
+  result = g_output_stream_close (g_subprocess_get_stdin_pipe (cat), NULL, &error);
+  g_assert_no_error (error);
+  g_assert (result);
 
-  g_io_stream_close ((GIOStream*)temp_file_io, NULL, error);
-  g_assert_no_error (local_error);
+  /* Now check that reading cat's stdout gets us an EOF (since it quit) */
+  s = g_input_stream_read (g_subprocess_get_stdout_pipe (cat), &buffer, sizeof buffer, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (!s);
 
-  stdin = g_subprocess_get_stdin_pipe (proc);
-  
-  write_buf = g_strdup_printf ("fd-passing timestamp:%" G_GUINT64_FORMAT,
-			       g_get_monotonic_time ());
-  g_output_stream_write_all (stdin, write_buf, strlen (write_buf), &bytes_written,
-			     NULL, error);
-  g_assert_no_error (local_error);
+  /* Check that the process has exited as a result of the EOF */
+  result = g_subprocess_wait_sync (cat, &exit_status, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (exit_status, ==, 0);
+  g_assert (result);
 
-  g_output_stream_close (stdin, NULL, error);
-  g_assert_no_error (local_error);
-
-  g_subprocess_wait_sync_check (proc, NULL, error);
-  g_assert_no_error (local_error);
-
-  g_file_load_contents (temp_file, NULL, &read_buf, &bytes_written, NULL, error);
-  g_assert_no_error (local_error);
-
-  g_assert_cmpstr (read_buf, ==, write_buf);
-
-  g_free (read_buf);
-  g_free (write_buf);
-  g_object_unref (proc);
-
-  g_file_delete (temp_file, NULL, error);
-  g_assert_no_error (local_error);
-  g_object_unref (temp_file);
-  g_object_unref (temp_file_io);
+  g_object_unref (cat);
 }
-#endif
 
 typedef struct {
   guint events_pending;
@@ -622,23 +487,17 @@ test_multi_1 (void)
   int splice_flags = G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET;
 
   args = get_test_subprocess_args ("cat", NULL);
-  first = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			    g_subprocess_stream_pipe (),
-			    g_subprocess_stream_pipe (),
-			    g_subprocess_stream_inherit (),
-			    error);
+  first = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL,
+                            G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                            error);
   g_assert_no_error (local_error);
-  second = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			     g_subprocess_stream_pipe (),
-			     g_subprocess_stream_pipe (),
-			     g_subprocess_stream_inherit (),
-			     error);
+  second = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL,
+                             G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                             error);
   g_assert_no_error (local_error);
-  third = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			    g_subprocess_stream_pipe (),
-			    g_subprocess_stream_pipe (),
-			    g_subprocess_stream_inherit (),
-			    error);
+  third = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL,
+                            G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                            error);
   g_assert_no_error (local_error);
 
   g_ptr_array_free (args, TRUE);
@@ -754,11 +613,7 @@ test_terminate (void)
   GMainLoop *loop;
 
   args = get_test_subprocess_args ("sleep-forever", NULL);
-  proc = g_subprocess_new ((char**) args->pdata, NULL, NULL, 0, NULL, NULL,
-			   g_subprocess_stream_devnull (),
-			   g_subprocess_stream_inherit (),
-			   g_subprocess_stream_inherit (),
-			   error);
+  proc = g_subprocess_new (NULL, (const gchar **) args->pdata, NULL, G_SUBPROCESS_FLAGS_NONE, error);
   g_ptr_array_free (args, TRUE);
   g_assert_no_error (local_error);
 
@@ -794,10 +649,7 @@ main (int argc, char **argv)
   g_test_add_func ("/gsubprocess/echo-merged", test_echo_merged);
 #endif
   g_test_add_func ("/gsubprocess/cat-utf8", test_cat_utf8);
-#ifdef G_OS_UNIX
-  g_test_add_func ("/gsubprocess/file-redirection", test_file_redirection);
-  g_test_add_func ("/gsubprocess/unix-fd-passing", test_unix_fd_passing);
-#endif
+  g_test_add_func ("/gsubprocess/cat-eof", test_cat_eof);
   g_test_add_func ("/gsubprocess/multi1", test_multi_1);
   g_test_add_func ("/gsubprocess/terminate", test_terminate);
   /* g_test_add_func ("/gsubprocess/argv0", test_argv0); */

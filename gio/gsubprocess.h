@@ -41,28 +41,11 @@ GType            g_subprocess_get_type (void) G_GNUC_CONST;
 /**** Creation ****/
 
 GLIB_AVAILABLE_IN_2_34
-GSubprocess *    g_subprocess_new (gchar                **argv,
-				   const gchar           *cwd,
-				   gchar                **env,
-				   GSpawnFlags            spawn_flags,
-				   GSpawnChildSetupFunc   child_setup,
-				   gpointer               user_data,
-				   GObject               *stdin_disposition,
-				   GObject               *stdout_disposition,
-				   GObject               *stderr_disposition,
-				   GError               **error);
-
-GLIB_AVAILABLE_IN_2_34
-GObject *         g_subprocess_stream_devnull (void);
-
-GLIB_AVAILABLE_IN_2_34
-GObject *         g_subprocess_stream_inherit (void);
-
-GLIB_AVAILABLE_IN_2_34
-GObject *         g_subprocess_stream_pipe (void);
-
-GLIB_AVAILABLE_IN_2_34
-GObject *         g_subprocess_stream_merge_stdout (void);
+GSubprocess *    g_subprocess_new (const gchar           *cwd,
+                                   const gchar * const   *argv,
+                                   const gchar * const   *env,
+                                   GSubprocessFlags       flags,
+                                   GError               **error);
 
 GLIB_AVAILABLE_IN_2_34
 GOutputStream *    g_subprocess_get_stdin_pipe (GSubprocess       *self);

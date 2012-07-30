@@ -315,11 +315,7 @@ end_element (GMarkupParseContext  *context,
 	      g_ptr_array_addv (args, xmllint, "--nonet", "--noblanks", "--output",
 				tmp_file, real_file, NULL);
 	      g_ptr_array_add (args, NULL);
-	      proc = g_subprocess_new ((gchar**)args->pdata, NULL, NULL, 0, NULL, NULL,
-				       g_subprocess_stream_devnull (),
-				       g_subprocess_stream_inherit (),
-				       g_subprocess_stream_inherit (),
-				       error);
+	      proc = g_subprocess_new (NULL, (const gchar**)args->pdata, NULL, 0, error);
 	      g_ptr_array_free (args, TRUE);
               g_free (real_file);
 	      real_file = NULL;
@@ -369,11 +365,7 @@ end_element (GMarkupParseContext  *context,
 	      args = g_ptr_array_new ();
 	      g_ptr_array_addv (args, gdk_pixbuf_pixdata, real_file, tmp_file2, NULL);
 	      g_ptr_array_add (args, NULL);
-	      proc = g_subprocess_new ((gchar**)args->pdata, NULL, NULL, 0, NULL, NULL,
-				       g_subprocess_stream_devnull (),
-				       g_subprocess_stream_inherit (),
-				       g_subprocess_stream_inherit (),
-				       error);
+	      proc = g_subprocess_new (NULL, (const gchar**)args->pdata, NULL, 0, error);
 	      g_ptr_array_free (args, TRUE);
               g_free (real_file);
 
