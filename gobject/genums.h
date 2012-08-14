@@ -256,9 +256,6 @@ void	g_flags_complete_type_info (GType	       g_flags_type,
 				    GTypeInfo	      *info,
 				    const GFlagsValue *const_values);
 
-#define G_TYPE_SPAWN_FLAGS (g_spawn_flags_get_type ())
-GType   g_spawn_flags_get_type (void) G_GNUC_CONST;
-
 G_END_DECLS
 
 #endif /* __G_ENUMS_H__ */

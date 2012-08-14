@@ -619,29 +619,3 @@ g_value_get_flags (const GValue *value)
   
   return value->data[0].v_ulong;
 }
-
-GType
-g_spawn_flags_get_type (void)
-{
-  static volatile gsize g_define_type_id__volatile = 0;
-
-  if (g_once_init_enter (&g_define_type_id__volatile))
-    {
-      static const GFlagsValue values[] = {
-        { G_SPAWN_LEAVE_DESCRIPTORS_OPEN, "G_SPAWN_LEAVE_DESCRIPTORS_OPEN", "leave-descriptors-open" },
-        { G_SPAWN_DO_NOT_REAP_CHILD, "G_SPAWN_DO_NOT_REAP_CHILD", "do-not-reap-child" },
-        { G_SPAWN_SEARCH_PATH, "G_SPAWN_SEARCH_PATH", "search-path" },
-        { G_SPAWN_STDOUT_TO_DEV_NULL, "G_SPAWN_STDOUT_TO_DEV_NULL", "stdout-to-dev-null" },
-        { G_SPAWN_STDERR_TO_DEV_NULL, "G_SPAWN_STDERR_TO_DEV_NULL", "stderr-to-dev-null" },
-        { G_SPAWN_CHILD_INHERITS_STDIN, "G_SPAWN_CHILD_INHERITS_STDIN", "child-inherits-stdin" },
-        { G_SPAWN_FILE_AND_ARGV_ZERO, "G_SPAWN_FILE_AND_ARGV_ZERO", "file-and-argv-zero" },
-        { G_SPAWN_SEARCH_PATH_FROM_ENVP, "G_SPAWN_SEARCH_PATH_FROM_ENVP", "search-path-from-envp" },
-        { 0, NULL, NULL }
-      };
-      GType g_define_type_id =
-        g_flags_register_static (g_intern_static_string ("GSpawnFlags"), values);
-      g_once_init_leave (&g_define_type_id__volatile, g_define_type_id);
-    }
-
-  return g_define_type_id__volatile;
-}
