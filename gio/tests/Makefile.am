@@ -407,11 +407,11 @@ endif
 
 test_programs += resources
 resources_SOURCES = resources.c
-nodist_resources_SOURCES = test_resources.c test_resources2.c test_resources2.h
+nodist_resources_SOURCES = test2-resources.c test3-resources.c test3-resources.h
 resources_DEPENDENCIES = test.gresource
 
 test_ltlibraries += libresourceplugin.la
-libresourceplugin_la_SOURCES = resourceplugin.c plugin_resources.c
+libresourceplugin_la_SOURCES = resourceplugin.c plugin-resources.c
 libresourceplugin_la_LDFLAGS = -avoid-version -module -export-dynamic $(no_undefined)
 libresourceplugin_la_LIBADD = $(LDADD)
 
@@ -432,14 +432,15 @@ else
   glib_compile_resources=$(top_builddir)/gio/glib-compile-resources
 endif
 
-resources.o: test_resources2.h
-test_resources.c: test2.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test2.gresource.xml)
-	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate-source --c-name _g_test1 $<
+resources.o: test3-resources.h
 
-test_resources2.h test_resources2.c: test3.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test3.gresource.xml)
+test2-resources.c: test2.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test2.gresource.xml)
+	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate-source --c-name _g_test2 $<
+
+test3-resources.h test3-resources.c: test3.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test3.gresource.xml)
 	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate --c-name _g_test2 --manual-register $<
 
-plugin_resources.c: test4.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test4.gresource.xml)
+plugin-resources.c: test4.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test4.gresource.xml)
 	$(AM_V_GEN) $(glib_compile_resources) --target=$@ --sourcedir=$(srcdir) --generate-source --c-name _g_plugin $<
 
 test.gresource: test.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test.gresource.xml)
@@ -447,4 +448,4 @@ test.gresource: test.gresource.xml Makefile $(shell $(glib_compile_resources) --
 
 EXTRA_DIST += test.gresource.xml test1.txt test2.gresource.xml test2.txt test3.gresource.xml test3.txt test4.gresource.xml
 
-CLEANFILES += test_resources.c test_resources2.[ch] plugin_resources.c test.gresource
+CLEANFILES += test2-resources.c test3-resources.[ch] plugin-resources.c test.gresource
