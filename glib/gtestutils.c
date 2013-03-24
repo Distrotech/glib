@@ -836,6 +836,35 @@ parse_args (gint    *argc_p,
   *argc_p = e;
 }
 
+static void
+g_test_case_free (GTestCase *test_case)
+{
+  g_free (test_case->name);
+  g_slice_free (GTestCase, test_case);
+}
+
+static void
+g_test_suite_free (GTestSuite *suite)
+{
+  g_free (suite->name);
+  g_slist_free_full (suite->suites, (GDestroyNotify) g_test_suite_free);
+  g_slist_free_full (suite->cases, (GDestroyNotify) g_test_case_free);
+  g_slice_free (GTestSuite, suite);
+}
+
+static void
+g_test_cleanup (void)
+{
+  g_clear_pointer (&test_run_rand, g_rand_free);
+
+  if (test_suite_root)
+    g_test_suite_free (test_suite_root);
+
+  g_free (test_trap_last_stdout);
+  g_free (test_trap_last_stderr);
+  g_free (test_uri_base);
+}
+
 /**
  * g_test_init:
  * @argc: Address of the @argc parameter of the main() function.
@@ -973,6 +1002,8 @@ g_test_init (int    *argc,
   /* report program start */
   g_log_set_default_handler (gtest_default_log_handler, NULL);
   g_test_log (G_TEST_LOG_START_BINARY, g_get_prgname(), test_run_seedstr, 0, NULL);
+
+  G_CLEANUP_ADD_FUNC (g_test_cleanup);
 }
 
 static void
