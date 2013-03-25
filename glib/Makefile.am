@@ -71,7 +71,6 @@ EXTRA_DIST += 			\
 	win_iconv.c		\
 	libglib-gdb.py.in	\
 	docs.c			\
-	gconstructor.h		\
 	$(MIRRORING_TAB_SOURCE)
 
 CLEANFILES += libglib-gdb.py
@@ -255,6 +254,7 @@ glibsubinclude_HEADERS = \
 	gbytes.h	\
 	gcharset.h	\
 	gchecksum.h	\
+	gconstructor.h	\
 	gconvert.h	\
 	gdataset.h	\
 	gdate.h		\
