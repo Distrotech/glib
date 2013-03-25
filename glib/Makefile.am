@@ -122,6 +122,7 @@ libglib_2_0_la_SOURCES = 	\
 	gcharset.c		\
 	gcharsetprivate.h	\
 	gchecksum.c		\
+	gcleanup.c		\
 	gconvert.c		\
 	gdataset.c		\
 	gdatasetprivate.h	\
@@ -254,6 +255,7 @@ glibsubinclude_HEADERS = \
 	gbytes.h	\
 	gcharset.h	\
 	gchecksum.h	\
+	gcleanup.h	\
 	gconstructor.h	\
 	gconvert.h	\
 	gdataset.h	\
