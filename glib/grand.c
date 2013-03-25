@@ -110,7 +110,6 @@
  **/
 
 G_LOCK_DEFINE_STATIC (global_random);
-static GRand* global_random = NULL;
 
 /* Period parameters */  
 #define N 624
@@ -584,6 +583,18 @@ g_rand_double_range (GRand* rand, gdouble begin, gdouble end)
   return r * end - (r - 1) * begin;
 }
 
+static GRand *
+get_global_random (void)
+{
+  static GRand *global_random;
+
+  /* called while locked */
+  if (!global_random)
+    global_random = g_rand_new ();
+
+  return global_random;
+}
+
 /**
  * g_random_boolean:
  *
@@ -604,10 +615,7 @@ g_random_int (void)
 {
   guint32 result;
   G_LOCK (global_random);
-  if (!global_random)
-    global_random = g_rand_new ();
-  
-  result = g_rand_int (global_random);
+  result = g_rand_int (get_global_random ());
   G_UNLOCK (global_random);
   return result;
 }
@@ -627,10 +635,7 @@ g_random_int_range (gint32 begin, gint32 end)
 {
   gint32 result;
   G_LOCK (global_random);
-  if (!global_random)
-    global_random = g_rand_new ();
-  
-  result = g_rand_int_range (global_random, begin, end);
+  result = g_rand_int_range (get_global_random (), begin, end);
   G_UNLOCK (global_random);
   return result;
 }
@@ -647,10 +652,7 @@ g_random_double (void)
 {
   double result;
   G_LOCK (global_random);
-  if (!global_random)
-    global_random = g_rand_new ();
-  
-  result = g_rand_double (global_random);
+  result = g_rand_double (get_global_random ());
   G_UNLOCK (global_random);
   return result;
 }
@@ -669,10 +671,7 @@ g_random_double_range (gdouble begin, gdouble end)
 {
   double result;
   G_LOCK (global_random);
-  if (!global_random)
-    global_random = g_rand_new ();
- 
-  result = g_rand_double_range (global_random, begin, end);
+  result = g_rand_double_range (get_global_random (), begin, end);
   G_UNLOCK (global_random);
   return result;
 }
@@ -688,9 +687,6 @@ void
 g_random_set_seed (guint32 seed)
 {
   G_LOCK (global_random);
-  if (!global_random)
-    global_random = g_rand_new_with_seed (seed);
-  else
-    g_rand_set_seed (global_random, seed);
+  g_rand_set_seed (get_global_random (), seed);
   G_UNLOCK (global_random);
 }
