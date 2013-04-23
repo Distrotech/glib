@@ -11,3 +11,4 @@ signals
 threadtests
 valuearray
 marshalers.[ch]
+property

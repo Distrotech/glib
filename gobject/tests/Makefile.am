@@ -29,7 +29,8 @@ TEST_PROGS += 		\
 	properties	\
 	reference	\
 	ifaceproperties	\
-	valuearray
+	valuearray	\
+	property
 
 signals_SOURCES = signals.c marshalers.c
 
