@@ -35,6 +35,9 @@ struct _TestObjectPrivate
   guint enum_val_set : 1;
 
   guint8 with_default;
+
+  float width;
+  float height;
 };
 
 GType test_enum_get_type (void);
@@ -74,6 +77,8 @@ enum
   PROP_BOOL_VAL,
   PROP_ENUM_VAL,
   PROP_WITH_DEFAULT,
+  PROP_WIDTH,
+  PROP_HEIGHT,
 
   LAST_PROP
 };
@@ -152,13 +157,19 @@ test_object_class_init (TestObjectClass *klass)
   g_property_set_prerequisite ((GProperty *) test_object_properties[PROP_ENUM_VAL],
                                test_enum_get_type ());
 
-  test_object_properties[PROP_WITH_DEFAULT] =
-    g_uint8_property_new ("with-default",
-                          G_PROPERTY_READWRITE,
-                          G_STRUCT_OFFSET (TestObjectPrivate, with_default),
-                          NULL,
-                          NULL);
-  g_property_set_default ((GProperty *) test_object_properties[PROP_WITH_DEFAULT], 255);
+  G_DEFINE_PROPERTY_EXTENDED (TestObject,
+                              uint8, with_default,
+                              G_PROPERTY_READWRITE,
+                              NULL, NULL,
+                              G_PROPERTY_DEFAULT (255)
+                              G_PROPERTY_DESCRIBE ("With Default", "A property with a default value")
+                              test_object_properties[PROP_WITH_DEFAULT] = G_PARAM_SPEC (g_property); );
+
+  test_object_properties[PROP_WIDTH] =
+    G_DEFINE_PROPERTY (TestObject, float, width, G_PROPERTY_READWRITE);
+
+  test_object_properties[PROP_HEIGHT] =
+    G_DEFINE_PROPERTY (TestObject, float, height, G_PROPERTY_READWRITE);
 
   g_object_class_install_properties (gobject_class, LAST_PROP, test_object_properties);
 }
@@ -175,8 +186,12 @@ test_object_init (TestObject *self)
 }
 
 G_DECLARE_PROPERTY_GET_SET (TestObject, test_object, gboolean, bool_val)
+G_DECLARE_PROPERTY_GET_SET (TestObject, test_object, float, width)
+G_DECLARE_PROPERTY_GET_SET (TestObject, test_object, float, height)
 
 G_DEFINE_PROPERTY_GET_SET (TestObject, test_object, gboolean, bool_val)
+G_DEFINE_PROPERTY_GET_SET (TestObject, test_object, float, width)
+G_DEFINE_PROPERTY_GET_SET (TestObject, test_object, float, height)
 
 /* test units start here */
 

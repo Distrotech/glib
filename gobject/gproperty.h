@@ -455,6 +455,94 @@ void            _g_property_set_installed       (GProperty           *property,
                                                  gpointer             g_class,
                                                  GType                class_gtype);
 
+/* property generation */
+
+/**
+ * G_PROPERTY_DESCRIBE:
+ * @p_nick: a human readable, translatable name for the property
+ * @p_blurb: a human readable, translatable description for the property
+ *
+ * Sets the property nick and blurb using two static strings.
+ *
+ * This macro can only be called inside %G_DEFINE_PROPERTY_EXTENDED.
+ *
+ * Since: 2.38
+ */
+#define G_PROPERTY_DESCRIBE(p_nick, p_blurb) \
+  { \
+    GParamSpec *__g_param_spec = (GParamSpec *) g_property; \
+    g_param_spec_set_static_nick (__g_param_spec, p_nick); \
+    g_param_spec_set_static_blurb (__g_param_spec, p_blurb); \
+  }
+
+/**
+ * G_PROPERTY_DEFAULT:
+ * @p_val: the default value of the property
+ *
+ * Sets the default value for the property.
+ *
+ * This macro can only be called inside %G_DEFINE_PROPERTY_EXTENDED.
+ *
+ * Since: 2.38
+ */
+#define G_PROPERTY_DEFAULT(p_val) \
+  g_property_set_default (g_property, p_val);
+
+/**
+ * G_PROPERTY_RANGE:
+ * @p_min: the minimum value of the valid range for the property
+ * @p_max: the maximum value of the valid range for the property
+ *
+ * Sets the range of valid values for the property.
+ *
+ * This macro can only be called inside %G_DEFINE_PROPERTY_EXTENDED.
+ *
+ * Since: 2.38
+ */
+#define G_PROPERTY_RANGE(p_min, p_max) \
+  g_property_set_range (g_property, p_min, p_max);
+
+/**
+ * G_DEFINE_PROPERTY_EXTENDED:
+ * @T_n: the type name of the class installing the property, in camel case
+ * @p_type: the type of the property
+ * @p_name: the name of the field in the private structure that stores the property
+ * @p_flags: #GPropertyFlags for the property
+ * @p_setter: the optional setter function, or %NULL for direct setters
+ * @p_getter: the optional getter function, or %NULL for direct getters
+ * @_C_: custom code to be inserted after the property has been defined; the
+ *   #GProperty instance is stored in a variabled called g_property
+ *
+ * Defines a new #GProperty using the provided arguments.
+ *
+ * Since: 2.38
+ */
+#define G_DEFINE_PROPERTY_EXTENDED(T_n, p_type, p_name, p_flags, p_setter, p_getter, _C_) \
+  { \
+    GProperty *g_property; \
+\
+    g_property = (GProperty *) \
+      g_ ##p_type## _property_new (#p_name, p_flags, \
+                                   G_STRUCT_OFFSET (T_n ## Private, p_name), \
+                                   p_setter, p_getter); \
+\
+    /* custom code follows */ { _C_; } \
+  }
+
+/**
+ * G_DEFINE_PROPERTY:
+ * @T_n: the type of the class installing the property, in camel case
+ * @p_type: the type of the property
+ * @p_name: the name of the field in the @T_n private structure that
+ *   stores the property
+ * @p_flags: #GPropertyFlags
+ *
+ * Defines a new #GProperty.
+ *
+ * Since: 2.38
+ */
+#define G_DEFINE_PROPERTY(T_n, p_type, p_name, p_flags) \
+  g_ ##p_type## _property_new (#p_name, p_flags, G_STRUCT_OFFSET (T_n ## Private, p_name), NULL, NULL)
 
 /* accessors generation */
 #define _G_DECLARE_PROPERTY_GETTER(T_n, t_n, f_t, f_n)  f_t t_n##_get_##f_n (T_n *self)
