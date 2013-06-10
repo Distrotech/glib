@@ -844,7 +844,7 @@ GDateTime *__dt = g_date_time_new_local (2009, 10, 24, 0, 0, 0);\
   tt.tm_min = 0;
   tt.tm_hour = 0;
   t = mktime (&tt);
-  g_sprintf (t_str, "%ld", t);
+  g_sprintf (t_str, "%ld", (long int)t);
 
   TEST_PRINTF ("%a", "Sat");
   TEST_PRINTF ("%A", "Saturday");
