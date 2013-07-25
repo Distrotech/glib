@@ -68,6 +68,8 @@
 #include "glib-unix.h"
 #endif
 
+#include "glib-private.h"
+
 #ifdef G_OS_WIN32
 #include <windows.h>
 #include <io.h>
@@ -2501,7 +2503,7 @@ g_local_file_monitor_dir (GFile             *file,
 			  GError           **error)
 {
   GLocalFile* local_file = G_LOCAL_FILE(file);
-  return _g_local_directory_monitor_new (local_file->filename, flags, is_remote (local_file->filename), error);
+  return _g_local_directory_monitor_new (local_file->filename, flags, NULL, is_remote (local_file->filename), TRUE, error);
 }
 
 static GFileMonitor*
@@ -2511,7 +2513,27 @@ g_local_file_monitor_file (GFile             *file,
 			   GError           **error)
 {
   GLocalFile* local_file = G_LOCAL_FILE(file);
-  return _g_local_file_monitor_new (local_file->filename, flags, is_remote (local_file->filename), error);
+  return _g_local_file_monitor_new (local_file->filename, flags, NULL, is_remote (local_file->filename), TRUE, error);
+}
+
+GLocalDirectoryMonitor *
+g_local_directory_monitor_new_in_worker (const char         *pathname,
+                                         GFileMonitorFlags   flags,
+                                         GError            **error)
+{
+  return (gpointer) _g_local_directory_monitor_new (pathname, flags,
+                                                    GLIB_PRIVATE_CALL (g_get_worker_context) (),
+                                                    is_remote (pathname), FALSE, error);
+}
+
+GLocalFileMonitor *
+g_local_file_monitor_new_in_worker (const char         *pathname,
+                                    GFileMonitorFlags   flags,
+                                    GError            **error)
+{
+  return (gpointer) _g_local_file_monitor_new (pathname, flags,
+                                               GLIB_PRIVATE_CALL (g_get_worker_context) (),
+                                               is_remote (pathname), FALSE, error);
 }
 
 static void
