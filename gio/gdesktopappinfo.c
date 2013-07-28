@@ -147,6 +147,8 @@ G_DEFINE_TYPE_WITH_CODE (GDesktopAppInfo, g_desktop_app_info, G_TYPE_OBJECT,
 G_LOCK_DEFINE_STATIC (g_desktop_env);
 static gchar *g_desktop_env = NULL;
 
+/* DesktopFileDirIndex implementation {{{1 */
+
 /* DesktopFileDir implementation {{{1 */
 
 typedef struct
@@ -156,6 +158,10 @@ typedef struct
   GHashTable                 *app_names;
   gboolean                    is_setup;
   struct dfi_index           *dfi;
+  gint8                      *key_id_map;
+  guint16                     key_id_map_length;
+  guint16                     this_locale_id;
+  guint16                     desktop_entry_id;
 } DesktopFileDir;
 
 static DesktopFileDir *desktop_file_dirs;
@@ -335,39 +341,185 @@ desktop_file_dir_unindexed_get_all (DesktopFileDir *dir,
     }
 }
 
+static void
+desktop_file_dir_unindexed_search (DesktopFileDir  *dir,
+                                   GSList         **buckets,
+                                   const gchar     *term)
+{
+  /* TODO */
+}
+
 /* Support for indexed DesktopFileDirs {{{2 */
 
-#if 0
 enum
 {
-  DFI_ID_THIS_LOCALE,
+  DESKTOP_KEY_nil,
 
-  DFI_ID_Desktop_Entry,
+  /* NB: must keep this list sorted */
+  DESKTOP_KEY_Actions,
+  DESKTOP_KEY_Categories,
+  DESKTOP_KEY_Comment,
+  DESKTOP_KEY_DBusActivatable,
+  DESKTOP_KEY_Exec,
+  DESKTOP_KEY_GenericName,
+  DESKTOP_KEY_Hidden,
+  DESKTOP_KEY_Icon,
+  DESKTOP_KEY_Keywords,
+  DESKTOP_KEY_MimeType,
+  DESKTOP_KEY_Name,
+  DESKTOP_KEY_NoDisplay,
+  DESKTOP_KEY_NotShowIn,
+  DESKTOP_KEY_OnlyShowIn,
+  DESKTOP_KEY_Path,
+  DESKTOP_KEY_StartupNotify,
+  DESKTOP_KEY_StartupWMClass,
+  DESKTOP_KEY_Terminal,
+  DESKTOP_KEY_TryExec,
+  DESKTOP_KEY_Type,
+  DESKTOP_KEY_Version,
+  DESKTOP_KEY_X_GNOME_FullName,
 
-  DFI_ID_Name,
-  DFI_ID_Keywords,
-  DFI_ID_GenericName,
-  DFI_ID_X_GNOME_FullName,
-  DFI_ID_Comment,
-
-  N_DFI_IDS
+  N_DESKTOP_KEYS
 };
-#endif
+
+const gchar *desktop_key_names[N_DESKTOP_KEYS];
+
+const gchar desktop_key_match_category[N_DESKTOP_KEYS] = {
+  /* NB: no harm in repeating numbers in case of a tie */
+  [DESKTOP_KEY_Name]             = 1,
+  [DESKTOP_KEY_GenericName]      = 2,
+  [DESKTOP_KEY_Keywords]         = 3,
+  [DESKTOP_KEY_X_GNOME_FullName] = 4,
+  [DESKTOP_KEY_Comment]          = 5
+};
+
+#define DESKTOP_KEY_NUM_MATCH_CATEGORIES  5
+
+static void
+desktop_key_init (void)
+{
+  if G_LIKELY (desktop_key_names[1])
+    return;
+
+  desktop_key_names[DESKTOP_KEY_Actions]                = g_intern_static_string ("Actions");
+  desktop_key_names[DESKTOP_KEY_Categories]             = g_intern_static_string ("Categories");
+  desktop_key_names[DESKTOP_KEY_Comment]                = g_intern_static_string ("Comment");
+  desktop_key_names[DESKTOP_KEY_DBusActivatable]        = g_intern_static_string ("DBusActivatable");
+  desktop_key_names[DESKTOP_KEY_Exec]                   = g_intern_static_string ("Exec");
+  desktop_key_names[DESKTOP_KEY_GenericName]            = g_intern_static_string ("GenericName");
+  desktop_key_names[DESKTOP_KEY_Hidden]                 = g_intern_static_string ("Hidden");
+  desktop_key_names[DESKTOP_KEY_Icon]                   = g_intern_static_string ("Icon");
+  desktop_key_names[DESKTOP_KEY_Keywords]               = g_intern_static_string ("Keywords");
+  desktop_key_names[DESKTOP_KEY_MimeType]               = g_intern_static_string ("MimeType");
+  desktop_key_names[DESKTOP_KEY_Name]                   = g_intern_static_string ("Name");
+  desktop_key_names[DESKTOP_KEY_NoDisplay]              = g_intern_static_string ("NoDisplay");
+  desktop_key_names[DESKTOP_KEY_NotShowIn]              = g_intern_static_string ("NotShowIn");
+  desktop_key_names[DESKTOP_KEY_OnlyShowIn]             = g_intern_static_string ("OnlyShowIn");
+  desktop_key_names[DESKTOP_KEY_Path]                   = g_intern_static_string ("Path");
+  desktop_key_names[DESKTOP_KEY_StartupNotify]          = g_intern_static_string ("StartupNotify");
+  desktop_key_names[DESKTOP_KEY_StartupWMClass]         = g_intern_static_string ("StartupWMClass");
+  desktop_key_names[DESKTOP_KEY_Terminal]               = g_intern_static_string ("Terminal");
+  desktop_key_names[DESKTOP_KEY_TryExec]                = g_intern_static_string ("TryExec");
+  desktop_key_names[DESKTOP_KEY_Type]                   = g_intern_static_string ("Type");
+  desktop_key_names[DESKTOP_KEY_Version]                = g_intern_static_string ("Version");
+  desktop_key_names[DESKTOP_KEY_X_GNOME_FullName]       = g_intern_static_string ("X-GNOME-FullName");
+}
 
 static void
 desktop_file_dir_indexed_init (DesktopFileDir *dir)
 {
-  const struct dfi_string_list *app_names;
-  guint n_app_names, i;
+  desktop_key_init ();
 
-  dir->app_names = g_hash_table_new (g_str_hash, g_str_equal);
-  app_names = dfi_index_get_app_names (dir->dfi);
-  n_app_names = dfi_string_list_get_length (app_names);
+  /* Find the current locale */
+  {
+    const struct dfi_string_list *locale_names;
+    const gchar * const *language_names;
+    gint i;
 
-  for (i = 0; i < n_app_names; i++)
-    g_hash_table_insert (dir->app_names,
-                         (gchar *) dfi_string_list_get_string_at_index (app_names, dir->dfi, i),
-                         GUINT_TO_POINTER (i));
+    locale_names = dfi_index_get_locale_names (dir->dfi);
+
+    language_names = g_get_language_names ();
+    locale_names = dfi_index_get_locale_names (dir->dfi);
+
+    /* If we don't get anything, the C locale is always zero, so set
+     * it as a default.
+     */
+    dir->this_locale_id = 0;
+
+    /* Iterate over our language names, in order of preference */
+    for (i = 0; language_names[i]; i++)
+      {
+        gint result = dfi_string_list_binary_search (locale_names, dir->dfi, language_names[i]);
+
+        if (result >= 0)
+          {
+            dir->this_locale_id = result;
+            break;
+          }
+      }
+
+    g_printerr ("found my locale is %d/%s\n", dir->this_locale_id, language_names[i]);
+  }
+
+  /* Populate the app names list. */
+  {
+    const struct dfi_string_list *app_names;
+    guint n_app_names, i;
+
+    app_names = dfi_index_get_app_names (dir->dfi);
+    n_app_names = dfi_string_list_get_length (app_names);
+
+    /* Store the index of each application so we don't need to do binary
+     * searches to find applications.
+     */
+    dir->app_names = g_hash_table_new (g_str_hash, g_str_equal);
+
+    for (i = 0; i < n_app_names; i++)
+      g_hash_table_insert (dir->app_names,
+                           (gchar *) dfi_string_list_get_string_at_index (app_names, dir->dfi, i),
+                           GUINT_TO_POINTER (i));
+  }
+
+  /* Find the ID of the [Desktop Entry] group */
+  {
+    const struct dfi_string_list *group_names;
+
+    group_names = dfi_index_get_group_names (dir->dfi);
+
+    dir->desktop_entry_id = dfi_string_list_binary_search (group_names, dir->dfi, "Desktop Entry");
+  }
+
+  /* Populate the key id map */
+  {
+    const struct dfi_string_list *key_names;
+    guint n_key_names;
+    guint i = 0;
+    guint j = 1;
+
+    key_names = dfi_index_get_key_names (dir->dfi);
+    n_key_names = dfi_string_list_get_length (key_names);
+
+    dir->key_id_map = g_malloc0 (n_key_names);
+    dir->key_id_map_length = n_key_names;
+
+    while (i < n_key_names && j < N_DESKTOP_KEYS)
+      {
+        const gchar *keyname = dfi_string_list_get_string_at_index (key_names, dir->dfi, i);
+        gint cmp;
+
+        cmp = strcmp (keyname, desktop_key_names[j]);
+
+        if (cmp == 0)
+          {
+            g_printerr ("mapped keyname %s(%d) to %d\n", keyname, i, j);
+          dir->key_id_map[i++] = j++;
+          }
+        else if (cmp < 0)
+          i++;
+        else
+          j++;
+      }
+  }
 }
 
 static GDesktopAppInfo *
@@ -406,6 +558,75 @@ desktop_file_dir_indexed_get_all (DesktopFileDir *dir,
 
       add_to_table_if_appropriate (apps, app_name,
                                    g_desktop_app_info_new_from_index (dir->dfi, desktop_files, i));
+    }
+}
+
+static void
+desktop_file_dir_indexed_search (DesktopFileDir  *dir,
+                                 GSList         **buckets,
+                                 const gchar     *term)
+{
+  const struct dfi_pointer_array *text_indexes;
+  const struct dfi_string_list *app_names;
+  const struct dfi_text_index *text_index;
+  const struct dfi_text_index_item *start;
+  const struct dfi_text_index_item *end;
+  const struct dfi_text_index_item *item;
+
+  text_indexes = dfi_index_get_text_indexes (dir->dfi);
+  text_index = dfi_text_index_from_pointer (dir->dfi,
+                                            dfi_pointer_array_get_pointer (text_indexes, dir->this_locale_id));
+  if (text_index == NULL)
+    return;
+
+  //dfi_text_index_prefix_search (text_index, dir->dfi, term, &start, &end);
+  start = NULL;
+  end = start + 1;
+
+  app_names = dfi_index_get_app_names (dir->dfi);
+
+  for (item = start; item < end; item++)
+    {
+      const dfi_id *ids;
+      guint n_ids;
+
+      gint j;
+
+      //ids = dfi_text_index_item_get_ids (item, dir->dfi, &n_ids);
+      n_ids = 0;
+      ids = dfi_text_index_get_ids_for_exact_match (dir->dfi, text_index, term, (gint *) &n_ids);
+      g_printerr ("n_ids is %u\n", n_ids);
+
+      if (n_ids % 3 != 0)
+        continue;
+
+      for (j = 0; j < n_ids; j += 3)
+        {
+          guint16 app_id, group_id, key_id;
+          const gchar *app_name;
+          guint8 match_category;
+
+          app_id   = dfi_id_get (ids[j + 0]);
+          group_id = dfi_id_get (ids[j + 1]);
+          key_id   = dfi_id_get (ids[j + 2]);
+
+          app_name = dfi_string_list_get_string_at_index (app_names, dir->dfi, app_id);
+          if (!app_name)
+            continue;
+
+          if (group_id != dir->desktop_entry_id)
+            continue;
+
+          if (key_id >= dir->key_id_map_length)
+            continue;
+
+          match_category = desktop_key_match_category[dir->key_id_map[key_id]];
+
+          if (!match_category)
+            continue;
+
+          g_printerr ("Matched '%s' in category %d\n", app_name, match_category);
+        }
     }
 }
 
@@ -457,6 +678,16 @@ desktop_file_dir_reset (DesktopFileDir *dir)
       dfi_index_free (dir->dfi);
       dir->dfi = NULL;
     }
+
+  if (dir->key_id_map)
+    {
+      g_free (dir->key_id_map);
+      dir->key_id_map = NULL;
+    }
+
+  dir->key_id_map_length = 0;
+  dir->desktop_entry_id = 0;
+  dir->this_locale_id = 0;
 
   dir->is_setup = FALSE;
 }
@@ -534,6 +765,26 @@ desktop_file_dir_get_all (DesktopFileDir *dir,
     desktop_file_dir_indexed_get_all (dir, apps);
   else
     desktop_file_dir_unindexed_get_all (dir, apps);
+}
+
+#define N_SEARCH_BUCKETS 1
+
+/*< internal >
+ * desktop_file_dir_search:
+ * @dir: a #DesktopFilEDir
+ * @term: a normalised and casefolded search term
+ *
+ * Finds the names of applications in @dir that match @term.
+ */
+static void
+desktop_file_dir_search (DesktopFileDir  *dir,
+                         GSList         **buckets,
+                         const gchar     *term)
+{
+  if (dir->dfi)
+    desktop_file_dir_indexed_search (dir, buckets, term);
+  else
+    desktop_file_dir_unindexed_search (dir, buckets, term);
 }
 
 /* Lock/unlock and global setup API {{{2 */
@@ -3201,6 +3452,20 @@ g_app_info_get_default_for_uri_scheme (const char *uri_scheme)
 }
 
 /* "Get all" API {{{2 */
+
+
+void
+g_desktop_app_info_search (const char *token)
+{
+  gint i;
+
+  desktop_file_dirs_lock ();
+
+  for (i = 0; i < n_desktop_file_dirs; i++)
+    desktop_file_dir_search (&desktop_file_dirs[i], NULL, token);
+
+  desktop_file_dirs_unlock ();
+}
 
 /**
  * g_app_info_get_all:
