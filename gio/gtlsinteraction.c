@@ -616,6 +616,39 @@ on_invoke_request_certificate_async_as_sync (gpointer user_data)
   return FALSE; /* don't call again */
 }
 
+/**
+ * g_tls_interaction_invoke_request_certificate:
+ * @interaction: a #GTlsInteraction object
+ * @connection: a #GTlsConnection object
+ * @unused_flags: FIXME
+ * @cancellable: an optional #GCancellable cancellation object
+ * @error: an optional location to place an error on failure
+ *
+ * Invoke the interaction to ask the user to choose a certificate to
+ * use with the connection. It invokes this interaction in the main
+ * loop, specifically the #GMainContext returned by
+ * g_main_context_get_thread_default() when the interaction is
+ * created. This is called by called by #GTlsConnection when the peer
+ * requests a certificate during the handshake.
+ *
+ * Derived subclasses usually implement a certificate selector,
+ * although they may also choose to provide a certificate from
+ * elsewhere. Alternatively the user may abort this certificate
+ * request, which may or may not abort the TLS connection.
+ *
+ * The implementation can either be a synchronous (eg: modal dialog) or an
+ * asynchronous one (eg: modeless dialog). This function will take care of
+ * calling which ever one correctly.
+ *
+ * If the interaction is cancelled by the cancellation object, or by the
+ * user then %G_TLS_INTERACTION_FAILED will be returned with an error that
+ * contains a %G_IO_ERROR_CANCELLED error code. Certain implementations may
+ * not support immediate cancellation.
+ *
+ * Returns: The status of the certificate request interaction.
+ *
+ * Since: 2.40
+ */
 GTlsInteractionResult
 g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
                                               GTlsConnection     *connection,
@@ -672,8 +705,9 @@ g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
  * also choose to provide a certificate from elsewhere. Alternatively the user may
  * abort this certificate request, which will usually abort the TLS connection.
  *
- * If %G_TLS_INTERACTION_HANDLED is returned, then the #GTlsConnection passed
- * to g_tls_interaction_request_certificate() will have its certificate filled in.
+ * If %G_TLS_INTERACTION_HANDLED is returned, then the #GTlsConnection
+ * passed to g_tls_interaction_request_certificate() will have had its
+ * #GTlsConnection:certificate filled in.
  *
  * If the interaction is cancelled by the cancellation object, or by the
  * user then %G_TLS_INTERACTION_FAILED will be returned with an error that
@@ -682,7 +716,7 @@ g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
  *
  * Returns: The status of the request certificate interaction.
  *
- * Since: 2.36
+ * Since: 2.40
  */
 GTlsInteractionResult
 g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
@@ -721,7 +755,7 @@ g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
  * when the operation completes. Alternatively the user may abort this certificate
  * request, which will usually abort the TLS connection.
  *
- * Since: 2.36
+ * Since: 2.40
  */
 void
 g_tls_interaction_request_certificate_async (GTlsInteraction    *interaction,
@@ -763,8 +797,9 @@ g_tls_interaction_request_certificate_async (GTlsInteraction    *interaction,
  * Complete an request certificate user interaction request. This should be once
  * the g_tls_interaction_request_certificate_async() completion callback is called.
  *
- * If %G_TLS_INTERACTION_HANDLED is returned, then the #GTlsConnection passed
- * to g_tls_interaction_request_certificate() will have its certificate filled in.
+ * If %G_TLS_INTERACTION_HANDLED is returned, then the #GTlsConnection
+ * passed to g_tls_interaction_request_certificate_async() will have had its
+ * #GTlsConnection:certificate filled in.
  *
  * If the interaction is cancelled by the cancellation object, or by the
  * user then %G_TLS_INTERACTION_FAILED will be returned with an error that
@@ -772,7 +807,7 @@ g_tls_interaction_request_certificate_async (GTlsInteraction    *interaction,
  *
  * Returns: The status of the request certificate interaction.
  *
- * Since: 2.36
+ * Since: 2.40
  */
 GTlsInteractionResult
 g_tls_interaction_request_certificate_finish (GTlsInteraction    *interaction,
