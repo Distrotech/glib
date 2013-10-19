@@ -620,7 +620,7 @@ on_invoke_request_certificate_async_as_sync (gpointer user_data)
  * g_tls_interaction_invoke_request_certificate:
  * @interaction: a #GTlsInteraction object
  * @connection: a #GTlsConnection object
- * @unused_flags: FIXME
+ * @flags: flags providing more information about the request
  * @cancellable: an optional #GCancellable cancellation object
  * @error: an optional location to place an error on failure
  *
@@ -651,8 +651,8 @@ on_invoke_request_certificate_async_as_sync (gpointer user_data)
  */
 GTlsInteractionResult
 g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
-                                              GTlsConnection     *connection,
-                                              gint                unused_flags,
+                                              GTlsConnection               *connection,
+                                              GTlsCertificateRequestFlags   flags,
                                               GCancellable       *cancellable,
                                               GError            **error)
 {
@@ -694,6 +694,7 @@ g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
  * g_tls_interaction_request_certificate:
  * @interaction: a #GTlsInteraction object
  * @connection: a #GTlsConnection object
+ * @flags: flags providing more information about the request
  * @cancellable: an optional #GCancellable cancellation object
  * @error: an optional location to place an error on failure
  *
@@ -719,11 +720,11 @@ g_tls_interaction_invoke_request_certificate (GTlsInteraction    *interaction,
  * Since: 2.40
  */
 GTlsInteractionResult
-g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
-                                       GTlsConnection     *connection,
-                                       gint                unused_flags,
-                                       GCancellable       *cancellable,
-                                       GError            **error)
+g_tls_interaction_request_certificate (GTlsInteraction              *interaction,
+                                       GTlsConnection               *connection,
+                                       GTlsCertificateRequestFlags   flags,
+                                       GCancellable                 *cancellable,
+                                       GError                      **error)
 {
   GTlsInteractionClass *klass;
 
@@ -733,7 +734,7 @@ g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
 
   klass = G_TLS_INTERACTION_GET_CLASS (interaction);
   if (klass->request_certificate)
-    return (klass->request_certificate) (interaction, connection, unused_flags, cancellable, error);
+    return (klass->request_certificate) (interaction, connection, flags, cancellable, error);
   else
     return G_TLS_INTERACTION_UNHANDLED;
 }
@@ -742,6 +743,7 @@ g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
  * g_tls_interaction_request_certificate_async:
  * @interaction: a #GTlsInteraction object
  * @connection: a #GTlsConnection object
+ * @flags: flags providing more information about the request
  * @cancellable: an optional #GCancellable cancellation object
  * @callback: (allow-none): will be called when the interaction completes
  * @user_data: (allow-none): data to pass to the @callback
@@ -758,12 +760,12 @@ g_tls_interaction_request_certificate (GTlsInteraction    *interaction,
  * Since: 2.40
  */
 void
-g_tls_interaction_request_certificate_async (GTlsInteraction    *interaction,
-                                             GTlsConnection     *connection,
-                                             gint                unused_flags,
-                                             GCancellable       *cancellable,
-                                             GAsyncReadyCallback callback,
-                                             gpointer            user_data)
+g_tls_interaction_request_certificate_async (GTlsInteraction              *interaction,
+                                             GTlsConnection               *connection,
+                                             GTlsCertificateRequestFlags   flags,
+                                             GCancellable                 *cancellable,
+                                             GAsyncReadyCallback           callback,
+                                             gpointer                      user_data)
 {
   GTlsInteractionClass *klass;
   GTask *task;
@@ -776,7 +778,7 @@ g_tls_interaction_request_certificate_async (GTlsInteraction    *interaction,
   if (klass->request_certificate_async)
     {
       g_return_if_fail (klass->request_certificate_finish);
-      (klass->request_certificate_async) (interaction, connection, unused_flags,
+      (klass->request_certificate_async) (interaction, connection, flags,
                                           cancellable, callback, user_data);
     }
   else

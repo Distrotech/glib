@@ -3551,6 +3551,7 @@ G_TYPE_TLS_PASSWORD_FLAGS
 <TITLE>GTlsInteraction</TITLE>
 GTlsInteraction
 GTlsInteractionResult
+GTlsCertificateRequestFlags
 g_tls_interaction_invoke_ask_password
 g_tls_interaction_invoke_request_certificate
 g_tls_interaction_ask_password
