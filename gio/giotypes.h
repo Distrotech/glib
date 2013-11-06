@@ -250,6 +250,23 @@ typedef struct _GVolume                       GVolume; /* Dummy typedef */
 typedef struct _GVolumeMonitor                GVolumeMonitor;
 
 /**
+ * GKdbus:
+ *
+ * A lowlevel kdbus object.
+ *
+ **/
+
+typedef struct _GKdbus                  GKdbus;
+
+/**
+ * GKdbusConnection:
+ *
+ * A kdbus connection GIOStream object.
+ *
+ **/
+typedef struct _GKdbusConnection              GKdbusConnection;
+
+/**
  * GAsyncReadyCallback:
  * @source_object: the object the asynchronous operation was started with.
  * @res: a #GAsyncResult.
@@ -339,6 +356,22 @@ typedef void (*GSimpleAsyncThreadFunc) (GSimpleAsyncResult *res,
  * Since: 2.22
  */
 typedef gboolean (*GSocketSourceFunc) (GSocket *socket,
+				       GIOCondition condition,
+				       gpointer user_data);
+
+/**
+ * GKdbusSourceFunc:
+ * @socket: the #GKdbus
+ * @condition: the current condition at the source fired.
+ * @user_data: data passed in by the user.
+ *
+ * This is the function type of the callback used for the #GSource
+ * returned by g_kdbus_create_source().
+ *
+ * Returns: it should return %FALSE if the source should be removed.
+ *
+ */
+typedef gboolean (*GKdbusSourceFunc) (GKdbus *kdbus,
 				       GIOCondition condition,
 				       gpointer user_data);
 

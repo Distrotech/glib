@@ -235,6 +235,10 @@ AC_ARG_ENABLE(gc_friendly,
               [AS_HELP_STRING([--enable-gc-friendly],
                               [turn on garbage collector friendliness [default=no]])],,
               [enable_gc_friendly=no])
+AC_ARG_ENABLE(kdbus_transport,
+              [AS_HELP_STRING([--enable-kdbus-transport],
+                             [enable kdbus transport [default=no]])],,
+              [enable_kdbus_transport=no])
 AC_ARG_ENABLE(mem_pools,
               [AS_HELP_STRING([--disable-mem-pools],
 			      [disable all glib memory pools])],,
@@ -253,6 +257,12 @@ AC_MSG_CHECKING([whether to enable garbage collector friendliness])
 AS_IF([test "x$enable_gc_friendly" = "xyes"], [
   AC_DEFINE(ENABLE_GC_FRIENDLY_DEFAULT, 1, [Whether to enable GC friendliness by default])
   AC_MSG_RESULT([yes])
+], [ AC_MSG_RESULT([no]) ])
+
+AC_MSG_CHECKING([kdbus transport])
+AS_IF([test "x$enable_kdbus_transport" = "xyes"], [
+  AC_MSG_RESULT([yes])
+  CFLAGS="$CFLAGS -DKDBUS_TRANSPORT"
 ], [ AC_MSG_RESULT([no]) ])
 
 AC_MSG_CHECKING([whether to disable memory pools])

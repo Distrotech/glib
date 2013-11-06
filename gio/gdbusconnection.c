@@ -128,6 +128,9 @@
 #include "gsimpleasyncresult.h"
 
 #ifdef G_OS_UNIX
+#ifdef KDBUS_TRANSPORT
+#include "gkdbusconnection.h"
+#endif
 #include "gunixconnection.h"
 #include "gunixfdmessage.h"
 #endif
@@ -1647,6 +1650,18 @@ g_dbus_connection_send_message_unlocked (GDBusConnection   *connection,
                        error))
     goto out;
 
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT)
+  if (G_IS_KDBUS_CONNECTION (connection->stream)){
+    if ((connection->bus_unique_name) != NULL) 
+      {
+        g_dbus_message_set_sender(message, connection->bus_unique_name);
+        #ifdef KDBUS_TRANSPORT_DEBUG 
+          g_print (" KDBUS_TRANSPORT_DEBUG: (%s()): set_sender ok!\n",__FUNCTION__);
+        #endif
+      }
+  }
+#endif
+
   blob = g_dbus_message_to_blob (message,
                                  &blob_size,
                                  connection->capabilities,
@@ -2578,45 +2593,51 @@ initable_init (GInitable     *initable,
     {
       g_assert_not_reached ();
     }
-
-  /* Authenticate the connection */
-  if (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER)
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT)
+  /* TODO: [KDBUS] Our kdbus daemon doesn't support connection authentication */
+  if (!G_IS_KDBUS_CONNECTION (connection->stream))
     {
-      g_assert (!(connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT));
-      g_assert (connection->guid != NULL);
-      connection->auth = _g_dbus_auth_new (connection->stream);
-      if (!_g_dbus_auth_run_server (connection->auth,
-                                    connection->authentication_observer,
-                                    connection->guid,
-                                    (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_ALLOW_ANONYMOUS),
-                                    get_offered_capabilities_max (connection),
-                                    &connection->capabilities,
-                                    &connection->credentials,
-                                    cancellable,
-                                    &connection->initialization_error))
-        goto out;
-    }
-  else if (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT)
-    {
-      g_assert (!(connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER));
-      g_assert (connection->guid == NULL);
-      connection->auth = _g_dbus_auth_new (connection->stream);
-      connection->guid = _g_dbus_auth_run_client (connection->auth,
-                                                  connection->authentication_observer,
-                                                  get_offered_capabilities_max (connection),
-                                                  &connection->capabilities,
-                                                  cancellable,
-                                                  &connection->initialization_error);
-      if (connection->guid == NULL)
-        goto out;
-    }
+#endif
+      /* Authenticate the connection */
+      if (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER)
+        {
+          g_assert (!(connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT));
+          g_assert (connection->guid != NULL);
+          connection->auth = _g_dbus_auth_new (connection->stream);
+          if (!_g_dbus_auth_run_server (connection->auth,
+                                        connection->authentication_observer,
+                                        connection->guid,
+                                        (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_ALLOW_ANONYMOUS),
+                                        get_offered_capabilities_max (connection),
+                                        &connection->capabilities,
+                                        &connection->credentials,
+                                        cancellable,
+                                        &connection->initialization_error))
+            goto out;
+        }
+      else if (connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT)
+        {
+          g_assert (!(connection->flags & G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER));
+          g_assert (connection->guid == NULL);
+          connection->auth = _g_dbus_auth_new (connection->stream);
+          connection->guid = _g_dbus_auth_run_client (connection->auth,
+                                                      connection->authentication_observer,
+                                                      get_offered_capabilities_max (connection),
+                                                      &connection->capabilities,
+                                                      cancellable,
+                                                      &connection->initialization_error);
+          if (connection->guid == NULL)
+            goto out;
+        }
 
-  if (connection->authentication_observer != NULL)
-    {
-      g_object_unref (connection->authentication_observer);
-      connection->authentication_observer = NULL;
-    }
-
+      if (connection->authentication_observer != NULL)
+        {
+          g_object_unref (connection->authentication_observer);
+          connection->authentication_observer = NULL;
+        }
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT)
+  }
+#endif
   //g_output_stream_flush (G_SOCKET_CONNECTION (connection->stream)
 
   //g_debug ("haz unix fd passing powers: %d", connection->capabilities & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);

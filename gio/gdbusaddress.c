@@ -44,6 +44,9 @@
 
 #ifdef G_OS_UNIX
 #include <gio/gunixsocketaddress.h>
+#ifdef KDBUS_TRANSPORT
+#include <gio/gkdbusconnection.h>
+#endif
 #endif
 
 #ifdef G_OS_WIN32
@@ -401,7 +404,11 @@ g_dbus_is_supported_address (const gchar  *string,
         goto out;
 
       supported = FALSE;
-      if (g_strcmp0 (transport_name, "unix") == 0)
+      if ((g_strcmp0 (transport_name, "unix") == 0) 
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT) 
+      || (g_strcmp0 (transport_name, "kdbus") == 0)
+#endif
+      )
         supported = is_valid_unix (a[n], key_value_pairs, error);
       else if (g_strcmp0 (transport_name, "tcp") == 0)
         supported = is_valid_tcp (a[n], key_value_pairs, error);
@@ -553,7 +560,11 @@ g_dbus_address_connect (const gchar   *address_entry,
     {
     }
 #ifdef G_OS_UNIX
-  else if (g_strcmp0 (transport_name, "unix") == 0)
+  else if ((g_strcmp0 (transport_name, "unix") == 0)
+#ifdef KDBUS_TRANSPORT
+          || (g_strcmp0 (transport_name, "kdbus") == 0)
+#endif
+          )
     {
       const gchar *path;
       const gchar *abstract;
@@ -664,21 +675,47 @@ g_dbus_address_connect (const gchar   *address_entry,
 
   if (connectable != NULL)
     {
-      GSocketClient *client;
-      GSocketConnection *connection;
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT)
+      if (g_strcmp0 (transport_name, "kdbus") == 0)
+        {
+          GKdbusConnection *connection;
 
-      g_assert (ret == NULL);
-      client = g_socket_client_new ();
-      connection = g_socket_client_connect (client,
-                                            connectable,
-                                            cancellable,
-                                            error);
-      g_object_unref (connectable);
-      g_object_unref (client);
-      if (connection == NULL)
-        goto out;
+          const gchar *path;
+          path = g_hash_table_lookup (key_value_pairs, "path");
+          
+          g_assert (ret == NULL);
+          connection = g_kdbus_connection_new ();
+          g_kdbus_connection_connect (connection,
+                                      path,
+                                      cancellable,
+                                      error);
+          g_object_unref (connectable);
+          if (connection == NULL)
+            goto out;
 
-      ret = G_IO_STREAM (connection);
+          ret = G_IO_STREAM (connection);
+        }
+      else
+        {
+#endif
+          GSocketClient *client;
+          GSocketConnection *connection;
+
+          g_assert (ret == NULL);
+          client = g_socket_client_new ();
+          connection = g_socket_client_connect (client,
+                                                connectable,
+                                                cancellable,
+                                                error);
+          g_object_unref (connectable);
+          g_object_unref (client);
+          if (connection == NULL)
+            goto out;
+
+          ret = G_IO_STREAM (connection);
+#if defined (G_OS_UNIX) && (KDBUS_TRANSPORT)
+        }
+#endif
 
       if (nonce_file != NULL)
         {

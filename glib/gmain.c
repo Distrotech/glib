@@ -3692,7 +3692,14 @@ g_main_context_iterate (GMainContext *context,
 
   if (!block)
     timeout = 0;
-  
+ 
+  #ifdef KDBUS_DEBUG
+    g_print (" KDBUS_DEBUG: nfds=%d\n",nfds);
+    g_print (" KDBUS_DEBUG: fd[0]=%d\n",fds[0].fd);
+    g_print (" KDBUS_DEBUG: fd[1]=%d\n",fds[1].fd);
+    g_print (" KDBUS_DEBUG: fd[2]=%d\n",fds[2].fd);
+  #endif
+
   g_main_context_poll (context, timeout, max_priority, fds, nfds);
   
   some_ready = g_main_context_check (context, max_priority, fds, nfds);

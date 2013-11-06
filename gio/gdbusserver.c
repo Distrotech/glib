@@ -634,6 +634,18 @@ random_ascii (void)
   return ret;
 }
 
+#ifdef KDBUS_TRANSPORT
+static gboolean
+try_kdbus (GDBusServer *server,
+           const gchar *address_entry,
+           GHashTable  *key_value_pairs,
+           GError     **error)
+{
+  g_print ("GDBusServer - KDBUS\n");
+  return TRUE;
+}
+#endif
+
 /* note that address_entry has already been validated => exactly one of path, tmpdir or abstract keys are set */
 static gboolean
 try_unix (GDBusServer  *server,
@@ -1071,6 +1083,10 @@ initable_init (GInitable     *initable,
 #ifdef G_OS_UNIX
           else if (g_strcmp0 (transport_name, "unix") == 0)
             ret = try_unix (server, address_entry, key_value_pairs, &this_error);
+#ifdef KDBUS_TRANSPORT
+          else if (g_strcmp0 (transport_name, "kdbus") == 0)
+            ret = try_kdbus (server, address_entry, key_value_pairs, &this_error);
+#endif
 #endif
           else if (g_strcmp0 (transport_name, "tcp") == 0)
             ret = try_tcp (server, address_entry, key_value_pairs, FALSE, &this_error);
