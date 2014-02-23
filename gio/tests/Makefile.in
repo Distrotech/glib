@@ -4443,7 +4443,7 @@ uninstall-am: uninstall-installed_testLTLIBRARIES \
 @OS_UNIX_TRUE@	cp -f test.mo de/LC_MESSAGES
 
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@gdbus-test-codegen.o: gdbus-test-codegen-generated.h
-@HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@gdbus-test-codegen-generated.h gdbus-test-codegen-generated.c: test-codegen.xml Makefile $(top_builddir)/gio/gdbus-2.0/codegen/gdbus-codegen
+@HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@gdbus-test-codegen-generated.h: test-codegen.xml Makefile $(top_builddir)/gio/gdbus-2.0/codegen/gdbus-codegen
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@	$(AM_V_GEN) UNINSTALLED_GLIB_SRCDIR=$(top_srcdir) \
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@		UNINSTALLED_GLIB_BUILDDIR=$(top_builddir) \
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@		$(PYTHON) $(top_builddir)/gio/gdbus-2.0/codegen/gdbus-codegen \
@@ -4462,6 +4462,8 @@ uninstall-am: uninstall-installed_testLTLIBRARIES \
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@		--annotate "org.project.Bar::TestSignal[array_of_strings]" Key8 Value8 \
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@		$(srcdir)/test-codegen.xml \
 @HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@		$(NULL)
+@HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@gdbus-test-codegen-generated.c: gdbus-test-codegen-generated.h
+@HAVE_DBUS_DAEMON_TRUE@@OS_UNIX_TRUE@	@: # Generated as side-effect of .h
 
 resources.o: test_resources2.h
 test_resources.c: test2.gresource.xml Makefile $(shell $(glib_compile_resources) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test2.gresource.xml)
