@@ -19,6 +19,10 @@
 #ifndef __G_NETWORK_MONITOR_BASE_H__
 #define __G_NETWORK_MONITOR_BASE_H__
 
+#if !defined (__GIO_GIO_H_INSIDE__) && !defined (GIO_COMPILATION)
+#error "Only <gio/gio.h> can be included directly."
+#endif
+
 #include <gio/giotypes.h>
 
 G_BEGIN_DECLS
@@ -48,17 +52,17 @@ struct _GNetworkMonitorBaseClass {
   gpointer padding[8];
 };
 
-GLIB_AVAILABLE_IN_ALL
+GLIB_AVAILABLE_IN_2_42
 GType g_network_monitor_base_get_type (void);
 
 /*< protected >*/
-GLIB_AVAILABLE_IN_2_32
+GLIB_AVAILABLE_IN_2_42
 void g_network_monitor_base_add_network    (GNetworkMonitorBase  *monitor,
 					    GInetAddressMask     *network);
-GLIB_AVAILABLE_IN_2_32
+GLIB_AVAILABLE_IN_2_42
 void g_network_monitor_base_remove_network (GNetworkMonitorBase  *monitor,
 					    GInetAddressMask     *network);
-GLIB_AVAILABLE_IN_ALL
+GLIB_AVAILABLE_IN_2_42
 void g_network_monitor_base_set_networks   (GNetworkMonitorBase  *monitor,
 					    GInetAddressMask    **networks,
 					    gint                  length);

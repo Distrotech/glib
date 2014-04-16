@@ -406,7 +406,6 @@ libgio_2_0_la_SOURCES =		\
 	gnetworkingprivate.h	\
 	gnetworkmonitor.c	\
 	gnetworkmonitorbase.c	\
-	gnetworkmonitorbase.h	\
 	gnetworkservice.c	\
 	goutputstream.c 	\
 	gpermission.c 		\
@@ -577,6 +576,7 @@ gio_headers =			\
 	gnativevolumemonitor.h 	\
 	gnetworkaddress.h	\
 	gnetworkmonitor.h	\
+	gnetworkmonitorbase.h	\
 	gnetworkservice.h	\
 	goutputstream.h 	\
 	gpermission.h 		\

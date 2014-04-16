@@ -31,6 +31,35 @@
 #include "gtask.h"
 #include "glibintl.h"
 
+/**
+ * SECTION:gnetworkmonitorbase
+ * @title: GNetworkMonitorBase
+ * @short_description: Base GNetworkMonitor implementation
+ * @include: gio/gio.h
+ *
+ * #GNetworkMonitorBase is a base for implementations of
+ * #GNetworkMonitor. Subclasses can call
+ * g_network_monitor_base_add_network(),
+ * g_network_monitor_base_remove_network(), and
+ * g_network_monitor_base_set_networks(), and #GNetworkMonitorBase
+ * handles the #GNetworkMonitor properties and signals, and
+ * implements g_network_monitor_can_reach(), based on that data.
+ *
+ * #GNetworkMonitorBase is thread-safe, so subclasses can modify the
+ * list of networks from any thread, and signals and property
+ * notifications will automatically be proxied to monitor's
+ * thread-default context.
+ */
+
+/**
+ * GNetworkMonitorBase:
+ *
+ * #GNetworkMonitorBase is a base for implementations of
+ * #GNetworkMonitor.
+ *
+ * Since: 2.42
+ */
+
 static void g_network_monitor_base_iface_init (GNetworkMonitorInterface *iface);
 static void g_network_monitor_base_initable_iface_init (GInitableIface *iface);
 
@@ -43,6 +72,8 @@ enum
 
 struct _GNetworkMonitorBasePrivate
 {
+  GMutex        mutex;
+
   GPtrArray    *networks;
   gboolean      have_ipv4_default_route;
   gboolean      have_ipv6_default_route;
@@ -73,6 +104,8 @@ static void
 g_network_monitor_base_init (GNetworkMonitorBase *monitor)
 {
   monitor->priv = g_network_monitor_base_get_instance_private (monitor);
+
+  g_mutex_init (&monitor->priv->mutex);
   monitor->priv->networks = g_ptr_array_new_with_free_func (g_object_unref);
   monitor->priv->context = g_main_context_get_thread_default ();
   if (monitor->priv->context)
@@ -129,6 +162,7 @@ g_network_monitor_base_finalize (GObject *object)
 {
   GNetworkMonitorBase *monitor = G_NETWORK_MONITOR_BASE (object);
 
+  g_mutex_clear (&monitor->priv->mutex);
   g_ptr_array_free (monitor->priv->networks, TRUE);
   if (monitor->priv->network_changed_source)
     {
@@ -153,6 +187,7 @@ g_network_monitor_base_class_init (GNetworkMonitorBaseClass *monitor_class)
   g_object_class_override_property (gobject_class, PROP_NETWORK_AVAILABLE, "network-available");
 }
 
+/* Assumes base->priv->mutex is locked */
 static gboolean
 g_network_monitor_base_can_reach_sockaddr (GNetworkMonitorBase *base,
                                            GSocketAddress *sockaddr)
@@ -182,6 +217,7 @@ g_network_monitor_base_can_reach (GNetworkMonitor      *monitor,
   GNetworkMonitorBase *base = G_NETWORK_MONITOR_BASE (monitor);
   GSocketAddressEnumerator *enumerator;
   GSocketAddress *addr;
+  gboolean can_reach = FALSE;
 
   if (base->priv->networks->len == 0)
     {
@@ -199,34 +235,39 @@ g_network_monitor_base_can_reach (GNetworkMonitor      *monitor,
       return FALSE;
     }
 
+  g_mutex_lock (&base->priv->mutex);
+
   if (base->priv->have_ipv4_default_route &&
       base->priv->have_ipv6_default_route)
     {
-      g_object_unref (enumerator);
-      g_object_unref (addr);
-      return TRUE;
+      can_reach = TRUE;
+      goto done;
     }
 
   while (addr)
     {
       if (g_network_monitor_base_can_reach_sockaddr (base, addr))
         {
-          g_object_unref (addr);
-          g_object_unref (enumerator);
-          return TRUE;
+          can_reach = TRUE;
+          goto done;
         }
 
       g_object_unref (addr);
       addr = g_socket_address_enumerator_next (enumerator, cancellable, error);
     }
-  g_object_unref (enumerator);
 
   if (error && !*error)
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE,
                            _("Host unreachable"));
     }
-  return FALSE;
+
+ done:
+  g_object_unref (enumerator);
+  g_clear_object (&addr);
+  g_mutex_unlock (&base->priv->mutex);
+
+  return can_reach;
 }
 
 static void
@@ -238,6 +279,7 @@ can_reach_async_got_address (GObject      *object,
   GTask *task = user_data;
   GNetworkMonitorBase *base = g_task_get_source_object (task);
   GSocketAddress *addr;
+  gboolean can_reach;
   GError *error = NULL;
 
   addr = g_socket_address_enumerator_next_finish (enumerator, result, &error);
@@ -260,18 +302,22 @@ can_reach_async_got_address (GObject      *object,
         }
     }
 
-  if (g_network_monitor_base_can_reach_sockaddr (base, addr))
-    {
-      g_object_unref (addr);
-      g_task_return_boolean (task, TRUE);
-      g_object_unref (task);
-      return;
-    }
+  g_mutex_lock (&base->priv->mutex);
+  can_reach = g_network_monitor_base_can_reach_sockaddr (base, addr);
+  g_mutex_unlock (&base->priv->mutex);
   g_object_unref (addr);
 
-  g_socket_address_enumerator_next_async (enumerator,
-                                          g_task_get_cancellable (task),
-                                          can_reach_async_got_address, task);
+  if (can_reach)
+    {
+      g_task_return_boolean (task, TRUE);
+      g_object_unref (task);
+    }
+  else
+    {
+      g_socket_address_enumerator_next_async (enumerator,
+                                              g_task_get_cancellable (task),
+                                              can_reach_async_got_address, task);
+    }
 }
 
 static void
@@ -281,18 +327,22 @@ g_network_monitor_base_can_reach_async (GNetworkMonitor     *monitor,
                                         GAsyncReadyCallback  callback,
                                         gpointer             user_data)
 {
+  GNetworkMonitorBase *base = G_NETWORK_MONITOR_BASE (monitor);
   GTask *task;
   GSocketAddressEnumerator *enumerator;
 
   task = g_task_new (monitor, cancellable, callback, user_data);
 
-  if (G_NETWORK_MONITOR_BASE (monitor)->priv->networks->len == 0)
+  g_mutex_lock (&base->priv->mutex);
+  if (base->priv->networks->len == 0)
     {
+      g_mutex_unlock (&base->priv->mutex);
       g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_NETWORK_UNREACHABLE,
                                _("Network unreachable"));
       g_object_unref (task);
       return;
     }
+  g_mutex_unlock (&base->priv->mutex);
 
   enumerator = g_socket_connectable_proxy_enumerate (connectable);
   g_socket_address_enumerator_next_async (enumerator, cancellable,
@@ -338,9 +388,10 @@ static gboolean
 emit_network_changed (gpointer user_data)
 {
   GNetworkMonitorBase *monitor = user_data;
-  gboolean is_available;
+  gboolean available_changed = FALSE, network_changed = FALSE;
+  gboolean is_available = FALSE;
 
-  g_object_ref (monitor);
+  g_mutex_lock (&monitor->priv->mutex);
 
   if (monitor->priv->initializing)
     monitor->priv->initializing = FALSE;
@@ -351,19 +402,27 @@ emit_network_changed (gpointer user_data)
       if (monitor->priv->is_available != is_available)
         {
           monitor->priv->is_available = is_available;
-          g_object_notify (G_OBJECT (monitor), "network-available");
+          available_changed = TRUE;
         }
 
-      g_signal_emit (monitor, network_changed_signal, 0, is_available);
+      network_changed = TRUE;
     }
 
   g_source_unref (monitor->priv->network_changed_source);
   monitor->priv->network_changed_source = NULL;
+  g_mutex_unlock (&monitor->priv->mutex);
 
+  g_object_ref (monitor);
+  if (available_changed)
+    g_object_notify (G_OBJECT (monitor), "network-available");
+  if (network_changed)
+    g_signal_emit (monitor, network_changed_signal, 0, is_available);
   g_object_unref (monitor);
+
   return FALSE;
 }
 
+/* Assumes monitor->priv->mutex is locked */
 static void
 queue_network_changed (GNetworkMonitorBase *monitor)
 {
@@ -395,18 +454,9 @@ queue_network_changed (GNetworkMonitorBase *monitor)
     }
 }
 
-/**
- * g_network_monitor_base_add_network:
- * @monitor: the #GNetworkMonitorBase
- * @network: a #GInetAddressMask
- *
- * Adds @network to @monitor's list of available networks.
- *
- * Since: 2.32
- */
-void
-g_network_monitor_base_add_network (GNetworkMonitorBase *monitor,
-                                    GInetAddressMask    *network)
+static void
+g_network_monitor_base_add_network_unlocked (GNetworkMonitorBase *monitor,
+                                             GInetAddressMask    *network)
 {
   int i;
 
@@ -443,19 +493,43 @@ g_network_monitor_base_add_network (GNetworkMonitorBase *monitor,
 }
 
 /**
+ * g_network_monitor_base_add_network:
+ * @monitor: the #GNetworkMonitorBase
+ * @network: a #GInetAddressMask
+ *
+ * Adds @network to @monitor's list of available networks and queues
+ * a #GNetworkMonitor:network-changed signal emission in @monitor's
+ * #GMainContext.
+ *
+ * Since: 2.42
+ */
+void
+g_network_monitor_base_add_network (GNetworkMonitorBase *monitor,
+                                    GInetAddressMask    *network)
+{
+  g_mutex_lock (&monitor->priv->mutex);
+  g_network_monitor_base_add_network_unlocked (monitor, network);
+  g_mutex_unlock (&monitor->priv->mutex);
+}
+
+/**
  * g_network_monitor_base_remove_network:
  * @monitor: the #GNetworkMonitorBase
  * @network: a #GInetAddressMask
  *
- * Removes @network from @monitor's list of available networks.
+ * Removes @network from @monitor's list of available networks and
+ * queues a #GNetworkMonitor:network-changed signal emission in
+ * @monitor's #GMainContext.
  *
- * Since: 2.32
+ * Since: 2.42
  */
 void
 g_network_monitor_base_remove_network (GNetworkMonitorBase *monitor,
                                        GInetAddressMask    *network)
 {
   int i;
+
+  g_mutex_lock (&monitor->priv->mutex);
 
   for (i = 0; i < monitor->priv->networks->len; i++)
     {
@@ -479,9 +553,11 @@ g_network_monitor_base_remove_network (GNetworkMonitorBase *monitor,
             }
 
           queue_network_changed (monitor);
-          return;
+          break;
         }
     }
+
+  g_mutex_unlock (&monitor->priv->mutex);
 }
 
 /**
@@ -490,8 +566,9 @@ g_network_monitor_base_remove_network (GNetworkMonitorBase *monitor,
  * @networks: (array length=length): an array of #GInetAddressMask
  * @length: length of @networks
  *
- * Drops @monitor's current list of available networks and replaces
- * it with @networks.
+ * Drops @monitor's current list of available networks and replaces it
+ * with @networks, and queues a #GNetworkMonitor:network-changed
+ * signal emission in @monitor's #GMainContext.
  */
 void
 g_network_monitor_base_set_networks (GNetworkMonitorBase  *monitor,
@@ -500,10 +577,14 @@ g_network_monitor_base_set_networks (GNetworkMonitorBase  *monitor,
 {
   int i;
 
+  g_mutex_lock (&monitor->priv->mutex);
+
   g_ptr_array_set_size (monitor->priv->networks, 0);
   monitor->priv->have_ipv4_default_route = FALSE;
   monitor->priv->have_ipv6_default_route = FALSE;
 
   for (i = 0; i < length; i++)
-    g_network_monitor_base_add_network (monitor, networks[i]);
+    g_network_monitor_base_add_network_unlocked (monitor, networks[i]);
+
+  g_mutex_unlock (&monitor->priv->mutex);
 }

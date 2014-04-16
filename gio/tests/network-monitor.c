@@ -18,10 +18,6 @@
 
 #include "gio.h"
 
-/* hack */
-#define GIO_COMPILATION
-#include "gnetworkmonitorbase.h"
-
 #include <string.h>
 
 /* Test data; the GInetAddresses and GInetAddressMasks get filled in
