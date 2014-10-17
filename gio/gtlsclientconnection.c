@@ -110,6 +110,8 @@ g_tls_client_connection_default_init (GTlsClientConnectionInterface *iface)
    * a "modern" TLS handshake.
    *
    * Since: 2.28
+   * Deprecated: 2.44: #GTlsConnection:requested-versions gives you
+   * greater control over the versions to use.
    */
   g_object_interface_install_property (iface,
 				       g_param_spec_boolean ("use-ssl3",
@@ -118,6 +120,7 @@ g_tls_client_connection_default_init (GTlsClientConnectionInterface *iface)
 							     FALSE,
 							     G_PARAM_READWRITE |
 							     G_PARAM_CONSTRUCT |
+                                                             G_PARAM_DEPRECATED |
 							     G_PARAM_STATIC_STRINGS));
 
   /**
@@ -271,6 +274,8 @@ g_tls_client_connection_set_server_identity (GTlsClientConnection *conn,
  * Returns: whether @conn will use SSL 3.0
  *
  * Since: 2.28
+ * Deprecated: 2.44: #GTlsConnection:requested-versions gives you
+ * greater control over the versions to use.
  */
 gboolean
 g_tls_client_connection_get_use_ssl3 (GTlsClientConnection *conn)
@@ -295,6 +300,8 @@ g_tls_client_connection_get_use_ssl3 (GTlsClientConnection *conn)
  * a "modern" TLS handshake attempt.
  *
  * Since: 2.28
+ * Deprecated: 2.44: #GTlsConnection:requested-versions gives you
+ * greater control over the versions to use.
  */
 void
 g_tls_client_connection_set_use_ssl3 (GTlsClientConnection *conn,

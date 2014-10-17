@@ -76,6 +76,8 @@ enum {
   PROP_BASE_IO_STREAM,
   PROP_REQUIRE_CLOSE_NOTIFY,
   PROP_REHANDSHAKE_MODE,
+  PROP_REQUESTED_VERSIONS,
+  PROP_VERSION,
   PROP_USE_SYSTEM_CERTDB,
   PROP_DATABASE,
   PROP_INTERACTION,
@@ -189,6 +191,46 @@ g_tls_connection_class_init (GTlsConnectionClass *klass)
 						      G_PARAM_READWRITE |
 						      G_PARAM_CONSTRUCT |
 						      G_PARAM_STATIC_STRINGS));
+  /**
+   * GTlsConnection:requested-versions:
+   *
+   * The requested SSL/TLS versions. See
+   * g_tls_connection_set_requested_versions().
+   *
+   * Note that the default value of this property may change in future
+   * releases.
+   *
+   * Since: 2.44
+   */
+  g_object_class_install_property (gobject_class, PROP_REQUESTED_VERSIONS,
+				   g_param_spec_flags ("requested-versions",
+                                                       P_("Requested versions"),
+                                                       P_("SSL/TLS versions to use"),
+                                                       G_TYPE_TLS_VERSION,
+                                                       (G_TLS_VERSION_SSL_3_0 |
+                                                        G_TLS_VERSION_TLS_1_0 |
+                                                        G_TLS_VERSION_TLS_1_1 |
+                                                        G_TLS_VERSION_TLS_1_2),
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_CONSTRUCT |
+                                                       G_PARAM_STATIC_STRINGS));
+  /**
+   * GTlsConnection:version:
+   *
+   * The negotiated SSL/TLS version; this is only valid after a
+   * handshake has completed.
+   *
+   * Since: 2.44
+   */
+  g_object_class_install_property (gobject_class, PROP_VERSION,
+				   g_param_spec_flags ("version",
+                                                       P_("Version"),
+                                                       P_("Negotiated SSL/TLS version"),
+                                                       G_TYPE_TLS_VERSION,
+                                                       G_TLS_VERSION_INVALID,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_CONSTRUCT |
+                                                       G_PARAM_STATIC_STRINGS));
   /**
    * GTlsConnection:certificate:
    *
@@ -723,6 +765,78 @@ g_tls_connection_get_rehandshake_mode (GTlsConnection       *conn)
 		"rehandshake-mode", &mode,
 		NULL);
   return mode;
+}
+
+/**
+ * g_tls_connection_set_requested_versions:
+ * @conn: a #GTlsConnection
+ * @versions: the requested versions
+ *
+ * Sets the SSL/TLS versions that @conn will accept when handshaking.
+ *
+ * After the handshake completes, you can use
+ * g_tls_connection_get_version() to discover the negotiated version.
+ *
+ * Since: 2.44
+ */
+void
+g_tls_connection_set_requested_versions (GTlsConnection *conn,
+                                         GTlsVersion     versions)
+{
+  g_return_if_fail (G_IS_TLS_CONNECTION (conn));
+
+  g_object_set (G_OBJECT (conn),
+		"requested-versions", versions,
+		NULL);
+}
+
+/**
+ * g_tls_connection_get_requested_versions:
+ * @conn: a #GTlsConnection
+ *
+ * Gets the SSL/TLS versions that @conn will accept when handshaking.
+ * (To find the version that was actually negotiated, use
+ * g_tls_connection_get_version().)
+ *
+ * Returns: @conn's requested SSL/TLS versions
+ *
+ * Since: 2.44
+ */
+GTlsVersion
+g_tls_connection_get_requested_versions (GTlsConnection *conn)
+{
+  GTlsVersion versions;
+
+  g_return_val_if_fail (G_IS_TLS_CONNECTION (conn), G_TLS_VERSION_INVALID);
+
+  g_object_get (G_OBJECT (conn),
+		"requested-versions", &versions,
+		NULL);
+  return versions;
+}
+
+/**
+ * g_tls_connection_get_version:
+ * @conn: a #GTlsConnection
+ *
+ * Gets the SSL/TLS version that was negotiated on @conn.
+ *
+ * Returns: @conn's SSL/TLS version, or %G_TLS_VERSION_INVALID if @conn
+ * has not yet completed a handshake.
+ *
+ * Since: 2.44
+ */
+GTlsVersion
+g_tls_connection_get_version (GTlsConnection *conn)
+{
+  GTlsVersion version;
+
+  g_return_val_if_fail (G_IS_TLS_CONNECTION (conn), G_TLS_VERSION_INVALID);
+
+  g_object_get (G_OBJECT (conn),
+		"version", &version,
+		NULL);
+  return version;
 }
 
 /**

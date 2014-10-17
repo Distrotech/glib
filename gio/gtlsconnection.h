@@ -115,6 +115,15 @@ void                  g_tls_connection_set_rehandshake_mode        (GTlsConnecti
 GLIB_AVAILABLE_IN_ALL
 GTlsRehandshakeMode   g_tls_connection_get_rehandshake_mode        (GTlsConnection       *conn);
 
+GLIB_AVAILABLE_IN_2_44
+void                  g_tls_connection_set_requested_versions      (GTlsConnection       *conn,
+								    GTlsVersion           versions);
+GLIB_AVAILABLE_IN_2_44
+GTlsVersion           g_tls_connection_get_requested_versions      (GTlsConnection       *conn);
+
+GLIB_AVAILABLE_IN_2_44
+GTlsVersion           g_tls_connection_get_version                 (GTlsConnection       *conn);
+
 GLIB_AVAILABLE_IN_ALL
 gboolean              g_tls_connection_handshake                   (GTlsConnection       *conn,
 								    GCancellable         *cancellable,

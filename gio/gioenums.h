@@ -1811,6 +1811,26 @@ typedef enum {
   G_NOTIFICATION_PRIORITY_URGENT
 } GNotificationPriority;
 
+/**
+ * GTlsVersion:
+ * @G_TLS_VERSION_INVALID: invalid or unspecified version
+ * @G_TLS_VERSION_SSL_3_0: SSL 3.0
+ * @G_TLS_VERSION_TLS_1_0: TLS 1.0
+ * @G_TLS_VERSION_TLS_1_1: TLS 1.1
+ * @G_TLS_VERSION_TLS_1_2: TLS 1.2
+ *
+ * Versions of TLS/SSL that a connection might support.
+ *
+ * Since: 2.44
+ */
+typedef enum {
+  G_TLS_VERSION_INVALID = 0,
+  G_TLS_VERSION_SSL_3_0 = (1 << 0),
+  G_TLS_VERSION_TLS_1_0 = (1 << 1),
+  G_TLS_VERSION_TLS_1_1 = (1 << 2),
+  G_TLS_VERSION_TLS_1_2 = (1 << 3)
+} GTlsVersion;
+
 G_END_DECLS
 
 #endif /* __GIO_ENUMS_H__ */
