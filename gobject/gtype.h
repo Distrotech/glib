@@ -384,7 +384,9 @@ typedef gsize                           GType;
 typedef gulong                          GType;
 #endif
 typedef struct _GValue                  GValue;
+#ifndef __GTK_DOC_IGNORE__
 typedef union  _GTypeCValue             GTypeCValue;
+#endif
 typedef struct _GTypePlugin             GTypePlugin;
 typedef struct _GTypeClass              GTypeClass;
 typedef struct _GTypeInterface          GTypeInterface;

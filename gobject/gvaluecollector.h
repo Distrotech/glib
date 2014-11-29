@@ -50,6 +50,9 @@ enum	/*< skip >*/
 
 /* vararg union holding actual values collected
  */
+#ifdef __GTK_DOC_IGNORE__
+typedef union _GTypeCValue GTypeCValue;
+#endif
 /**
  * GTypeCValue:
  * @v_int: the field for holding integer values
