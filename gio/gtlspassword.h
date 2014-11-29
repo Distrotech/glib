@@ -57,9 +57,11 @@ struct _GTlsPassword
  */
 struct _GTlsPasswordClass
 {
+  /*< private >*/
   GObjectClass parent_class;
 
   /* methods */
+  /*< public >*/
 
   const guchar *    ( *get_value)            (GTlsPassword  *password,
                                               gsize         *length);

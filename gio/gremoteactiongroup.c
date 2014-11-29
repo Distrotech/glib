@@ -64,6 +64,7 @@
 
 /**
  * GRemoteActionGroupInterface:
+ * @g_iface: The parent interface.
  * @activate_action_full: the virtual function pointer for g_remote_action_group_activate_action_full()
  * @change_action_state_full: the virtual function pointer for g_remote_action_group_change_action_state_full()
  *

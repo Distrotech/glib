@@ -39,9 +39,9 @@ typedef struct _GInetAddressMaskPrivate GInetAddressMaskPrivate;
 
 struct _GInetAddressMask
 {
+  /*< private >*/
   GObject parent_instance;
 
-  /*< private >*/
   GInetAddressMaskPrivate *priv;
 };
 

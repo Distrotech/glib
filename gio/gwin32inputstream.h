@@ -46,9 +46,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GWin32InputStream, g_object_unref)
 
 struct _GWin32InputStream
 {
+  /*< private >*/
   GInputStream parent_instance;
 
-  /*< private >*/
   GWin32InputStreamPrivate *priv;
 };
 

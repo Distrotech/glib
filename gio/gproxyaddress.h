@@ -49,6 +49,7 @@ struct _GProxyAddress
 
 struct _GProxyAddressClass
 {
+  /*< private >*/
   GInetSocketAddressClass parent_class;
 };
 

@@ -21,6 +21,8 @@
 
 #include <glib.h>
 
+#ifndef __GTK_DOC_IGNORE__
+
 #ifdef G_OS_WIN32
 
 #ifndef _WIN32_WINNT
@@ -71,6 +73,8 @@
 #define CMSG_SPACE(len) GLIB_ALIGN_TO_SIZEOF (CMSG_LEN (len), struct cmsghdr)
 #endif
 #endif
+
+#endif /* __GTK_DOC_IGNORE__ */
 
 G_BEGIN_DECLS
 

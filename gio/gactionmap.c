@@ -51,6 +51,7 @@
 
 /**
  * GActionMapInterface:
+ * @g_iface: The parent interface.
  * @lookup_action: the virtual function pointer for g_action_map_lookup_action()
  * @add_action: the virtual function pointer for g_action_map_add_action()
  * @remove_action: the virtual function pointer for g_action_map_remove_action()

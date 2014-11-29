@@ -76,8 +76,10 @@ typedef struct _GSettingsBackendClass                       GSettingsBackendClas
  */
 struct _GSettingsBackendClass
 {
+  /*<private>*/
   GObjectClass parent_class;
 
+  /*<public>*/
   GVariant *    (*read)             (GSettingsBackend    *backend,
                                      const gchar         *key,
                                      const GVariantType  *expected_type,
@@ -110,6 +112,7 @@ struct _GSettingsBackendClass
                                      const gchar         *key,
                                      const GVariantType  *expected_type);
 
+  /*<private>*/
   gpointer padding[23];
 };
 

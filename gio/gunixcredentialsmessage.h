@@ -47,11 +47,14 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GUnixCredentialsMessage, g_object_unref)
  */
 struct _GUnixCredentialsMessageClass
 {
+  /*< private >*/
   GSocketControlMessageClass parent_class;
 
-  /*< private >*/
+  /*< public >*/
+
 
   /* Padding for future expansion */
+  /*< private >*/
   void (*_g_reserved1) (void);
   void (*_g_reserved2) (void);
 };
