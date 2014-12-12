@@ -2627,6 +2627,11 @@ AS_IF([ test "$enable_man" != no ], [
   AC_MSG_RESULT([no])
 ])
 
+dnl On linux, fail "make check" if something is missing from the API
+dnl documentation. Other plateforms aren't yet tested enough to enable this
+dnl as well.
+AM_CONDITIONAL(ENABLE_GTK_DOC_CHECK, [test "$glib_os_linux" = "yes"])
+
 dnl
 dnl Tracing
 dnl
