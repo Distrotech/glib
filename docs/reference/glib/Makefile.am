@@ -137,3 +137,12 @@ dist-hook-local: all-local
 
 glib-docs-clean: clean
 	cd $(srcdir) && rm -rf xml html
+
+if ENABLE_GTK_DOC
+if ENABLE_GTK_DOC_CHECK
+TESTS_ENVIRONMENT = \
+  DOC_MODULE=$(DOC_MODULE) DOC_MAIN_SGML_FILE=$(DOC_MAIN_SGML_FILE) \
+  SRCDIR=$(abs_srcdir) BUILDDIR=$(abs_builddir)
+TESTS = $(GTKDOC_CHECK)
+endif
+endif
