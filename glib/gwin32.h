@@ -111,25 +111,6 @@ gchar **        g_win32_get_command_line (void);
 #define G_WIN32_IS_NT_BASED() TRUE
 #define G_WIN32_HAVE_WIDECHAR_API() TRUE
 
-G_END_DECLS
-
-#endif	 /* G_PLATFORM_WIN32 */
-
-#ifndef __GTK_DOC_IGNORE__
-#ifdef G_OS_WIN32
-#ifdef _WIN64
-#define g_win32_get_package_installation_directory g_win32_get_package_installation_directory_utf8
-#define g_win32_get_package_installation_subdirectory g_win32_get_package_installation_subdirectory_utf8
-#endif
-
-GLIB_AVAILABLE_IN_ALL
-gchar *g_win32_get_package_installation_directory_utf8    (const gchar *package,
-                                                           const gchar *dll_name);
-GLIB_AVAILABLE_IN_ALL
-gchar *g_win32_get_package_installation_subdirectory_utf8 (const gchar *package,
-                                                           const gchar *dll_name,
-                                                           const gchar *subdir);
-
 /**
  * GWin32OSType:
  * @G_WIN32_OS_ANY: The running system can be a workstation or a server edition of
@@ -153,6 +134,25 @@ gboolean g_win32_check_windows_version (const gint major,
                                         const gint minor,
                                         const gint spver,
                                         const GWin32OSType os_type);
+
+G_END_DECLS
+
+#endif	 /* G_PLATFORM_WIN32 */
+
+#ifndef __GTK_DOC_IGNORE__
+#ifdef G_OS_WIN32
+#ifdef _WIN64
+#define g_win32_get_package_installation_directory g_win32_get_package_installation_directory_utf8
+#define g_win32_get_package_installation_subdirectory g_win32_get_package_installation_subdirectory_utf8
+#endif
+
+GLIB_AVAILABLE_IN_ALL
+gchar *g_win32_get_package_installation_directory_utf8    (const gchar *package,
+                                                           const gchar *dll_name);
+GLIB_AVAILABLE_IN_ALL
+gchar *g_win32_get_package_installation_subdirectory_utf8 (const gchar *package,
+                                                           const gchar *dll_name,
+                                                           const gchar *subdir);
 
 #endif /* G_OS_WIN32 */
 #endif /* __GTK_DOC_IGNORE__ */
