@@ -996,6 +996,7 @@ g_try_realloc_n
 <SUBSECTION>
 g_free
 g_clear_pointer
+g_steal_pointer
 g_mem_gc_friendly
 
 <SUBSECTION>

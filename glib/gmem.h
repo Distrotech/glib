@@ -183,6 +183,7 @@ gpointer g_try_realloc_n  (gpointer	 mem,
 static inline gpointer
 (g_steal_pointer) (gpointer pp)
 {
+#ifndef __GTK_DOC_IGNORE__
   gpointer *ptr = (gpointer *) pp;
   gpointer ref;
 
@@ -190,6 +191,7 @@ static inline gpointer
   *ptr = NULL;
 
   return ref;
+#endif
 }
 
 /* type safety */
