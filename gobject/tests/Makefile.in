@@ -86,10 +86,10 @@ host_triplet = @host@
 DIST_COMMON = $(top_srcdir)/glib-tap.mk $(srcdir)/Makefile.in \
 	$(srcdir)/Makefile.am $(top_srcdir)/depcomp \
 	$(top_srcdir)/test-driver
-TESTS = $(am__EXEEXT_2)
-installed_test_PROGRAMS = $(am__EXEEXT_5)
-noinst_PROGRAMS = $(am__EXEEXT_6)
-check_PROGRAMS = $(am__EXEEXT_4)
+TESTS = $(am__EXEEXT_3)
+installed_test_PROGRAMS = $(am__EXEEXT_6)
+noinst_PROGRAMS = $(am__EXEEXT_7)
+check_PROGRAMS = $(am__EXEEXT_5)
 @ENABLE_ALWAYS_BUILD_TESTS_TRUE@am__append_1 = $(all_test_ltlibs)
 @ENABLE_ALWAYS_BUILD_TESTS_TRUE@am__append_2 = $(all_test_programs)
 @ENABLE_ALWAYS_BUILD_TESTS_TRUE@am__append_3 = $(all_test_scripts)
@@ -115,6 +115,9 @@ check_PROGRAMS = $(am__EXEEXT_4)
 @ENABLE_INSTALLED_TESTS_TRUE@	$(dist_installed_test_data)
 @ENABLE_INSTALLED_TESTS_TRUE@am__append_12 = $(test_ltlibraries) $(installed_test_ltlibraries)
 @ENABLE_INSTALLED_TESTS_TRUE@am__append_13 = $(installed_test_meta_DATA)
+@CROSS_COMPILING_FALSE@am__append_14 = signals
+@CROSS_COMPILING_FALSE@am__append_15 = marshalers.h marshalers.c
+@CROSS_COMPILING_FALSE@am__append_16 = marshalers.list
 subdir = gobject/tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4macros/attributes.m4 \
@@ -170,16 +173,17 @@ am__installdirs = "$(DESTDIR)$(installed_testdir)" \
 	"$(DESTDIR)$(installed_testdir)"
 LTLIBRARIES = $(installed_test_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__EXEEXT_1 =
-am__EXEEXT_2 = qdata$(EXEEXT) boxed$(EXEEXT) enums$(EXEEXT) \
+@CROSS_COMPILING_FALSE@am__EXEEXT_2 = signals$(EXEEXT)
+am__EXEEXT_3 = qdata$(EXEEXT) boxed$(EXEEXT) enums$(EXEEXT) \
 	param$(EXEEXT) threadtests$(EXEEXT) dynamictests$(EXEEXT) \
 	binding$(EXEEXT) properties$(EXEEXT) reference$(EXEEXT) \
-	valuearray$(EXEEXT) type$(EXEEXT) private$(EXEEXT) \
-	closure$(EXEEXT) $(am__EXEEXT_1) ifaceproperties$(EXEEXT) \
-	signals$(EXEEXT)
-am__EXEEXT_3 = $(am__EXEEXT_2)
-@ENABLE_ALWAYS_BUILD_TESTS_FALSE@am__EXEEXT_4 = $(am__EXEEXT_3)
-@ENABLE_INSTALLED_TESTS_TRUE@am__EXEEXT_5 = $(am__EXEEXT_2)
-@ENABLE_ALWAYS_BUILD_TESTS_TRUE@am__EXEEXT_6 = $(am__EXEEXT_3)
+	value$(EXEEXT) type$(EXEEXT) private$(EXEEXT) closure$(EXEEXT) \
+	object$(EXEEXT) signal-handler$(EXEEXT) $(am__EXEEXT_1) \
+	ifaceproperties$(EXEEXT) $(am__EXEEXT_2)
+am__EXEEXT_4 = $(am__EXEEXT_3)
+@ENABLE_ALWAYS_BUILD_TESTS_FALSE@am__EXEEXT_5 = $(am__EXEEXT_4)
+@ENABLE_INSTALLED_TESTS_TRUE@am__EXEEXT_6 = $(am__EXEEXT_3)
+@ENABLE_ALWAYS_BUILD_TESTS_TRUE@am__EXEEXT_7 = $(am__EXEEXT_4)
 PROGRAMS = $(installed_test_PROGRAMS) $(noinst_PROGRAMS)
 binding_SOURCES = binding.c
 binding_OBJECTS = binding.$(OBJEXT)
@@ -215,6 +219,11 @@ ifaceproperties_OBJECTS = $(am_ifaceproperties_OBJECTS)
 ifaceproperties_LDADD = $(LDADD)
 ifaceproperties_DEPENDENCIES = ../libgobject-2.0.la \
 	$(top_builddir)/glib/libglib-2.0.la
+object_SOURCES = object.c
+object_OBJECTS = object.$(OBJEXT)
+object_LDADD = $(LDADD)
+object_DEPENDENCIES = ../libgobject-2.0.la \
+	$(top_builddir)/glib/libglib-2.0.la
 param_SOURCES = param.c
 param_OBJECTS = param.$(OBJEXT)
 param_LDADD = $(LDADD)
@@ -240,8 +249,14 @@ reference_OBJECTS = reference.$(OBJEXT)
 reference_LDADD = $(LDADD)
 reference_DEPENDENCIES = ../libgobject-2.0.la \
 	$(top_builddir)/glib/libglib-2.0.la
-am_signals_OBJECTS = signals.$(OBJEXT)
-nodist_signals_OBJECTS = marshalers.$(OBJEXT)
+signal_handler_SOURCES = signal-handler.c
+signal_handler_OBJECTS = signal-handler.$(OBJEXT)
+signal_handler_LDADD = $(LDADD)
+signal_handler_DEPENDENCIES = ../libgobject-2.0.la \
+	$(top_builddir)/glib/libglib-2.0.la
+am__signals_SOURCES_DIST = signals.c
+@CROSS_COMPILING_FALSE@am_signals_OBJECTS = signals.$(OBJEXT)
+@CROSS_COMPILING_FALSE@nodist_signals_OBJECTS = marshalers.$(OBJEXT)
 signals_OBJECTS = $(am_signals_OBJECTS) $(nodist_signals_OBJECTS)
 signals_LDADD = $(LDADD)
 signals_DEPENDENCIES = ../libgobject-2.0.la \
@@ -256,10 +271,10 @@ type_OBJECTS = type.$(OBJEXT)
 type_LDADD = $(LDADD)
 type_DEPENDENCIES = ../libgobject-2.0.la \
 	$(top_builddir)/glib/libglib-2.0.la
-valuearray_SOURCES = valuearray.c
-valuearray_OBJECTS = valuearray.$(OBJEXT)
-valuearray_LDADD = $(LDADD)
-valuearray_DEPENDENCIES = ../libgobject-2.0.la \
+value_SOURCES = value.c
+value_OBJECTS = value.$(OBJEXT)
+value_LDADD = $(LDADD)
+value_DEPENDENCIES = ../libgobject-2.0.la \
 	$(top_builddir)/glib/libglib-2.0.la
 SCRIPTS = $(installed_test_SCRIPTS) $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -297,13 +312,14 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = binding.c boxed.c closure.c dynamictests.c enums.c \
-	$(ifaceproperties_SOURCES) param.c private.c properties.c \
-	qdata.c reference.c $(signals_SOURCES) \
-	$(nodist_signals_SOURCES) threadtests.c type.c valuearray.c
+	$(ifaceproperties_SOURCES) object.c param.c private.c \
+	properties.c qdata.c reference.c signal-handler.c \
+	$(signals_SOURCES) $(nodist_signals_SOURCES) threadtests.c \
+	type.c value.c
 DIST_SOURCES = binding.c boxed.c closure.c dynamictests.c enums.c \
-	$(ifaceproperties_SOURCES) param.c private.c properties.c \
-	qdata.c reference.c $(signals_SOURCES) threadtests.c type.c \
-	valuearray.c
+	$(ifaceproperties_SOURCES) object.c param.c private.c \
+	properties.c qdata.c reference.c signal-handler.c \
+	$(am__signals_SOURCES_DIST) threadtests.c type.c value.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -489,7 +505,6 @@ RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check recheck
 TEST_SUITE_LOG = test-suite.log
 TEST_EXTENSIONS = @EXEEXT@ .test
-LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
 am__set_b = \
   case '$@' in \
@@ -504,10 +519,10 @@ am__set_b = \
 am__test_logs1 = $(TESTS:=.log)
 am__test_logs2 = $(am__test_logs1:@EXEEXT@.log=.log)
 TEST_LOGS = $(am__test_logs2:.test.log=.log)
+TEST_LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ABS_GLIB_RUNTIME_LIBDIR = @ABS_GLIB_RUNTIME_LIBDIR@
 ABS_TAPSET_DIR = @ABS_TAPSET_DIR@
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
@@ -519,11 +534,13 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+CARBON_LIBS = @CARBON_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COCOA_LIBS = @COCOA_LIBS@
 CONFIG_STATUS_DEPENDENCIES = @CONFIG_STATUS_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -554,11 +571,8 @@ GIO = @GIO@
 GIO_MODULE_DIR = @GIO_MODULE_DIR@
 GLIBC21 = @GLIBC21@
 GLIB_BINARY_AGE = @GLIB_BINARY_AGE@
-GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
-GLIB_COMPILE_SCHEMAS = @GLIB_COMPILE_SCHEMAS@
 GLIB_DEBUG_FLAGS = @GLIB_DEBUG_FLAGS@
 GLIB_EXTRA_CFLAGS = @GLIB_EXTRA_CFLAGS@
-GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GLIB_HIDDEN_VISIBILITY_CFLAGS = @GLIB_HIDDEN_VISIBILITY_CFLAGS@
 GLIB_INTERFACE_AGE = @GLIB_INTERFACE_AGE@
 GLIB_LINK_FLAGS = @GLIB_LINK_FLAGS@
@@ -756,18 +770,18 @@ TESTS_ENVIRONMENT = \
 	MALLOC_CHECK_=2 			\
 	MALLOC_PERTURB_=$$(($${RANDOM:-256} % 256))
 
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tap-driver.sh
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tap-driver.sh
 LOG_COMPILER = $(top_srcdir)/tap-test
 NULL = 
 
 # initialize variables for unconditional += appending
 BUILT_SOURCES = 
 BUILT_EXTRA_DIST = 
-CLEANFILES = *.log *.trs $(am__append_13) marshalers.h marshalers.c
+CLEANFILES = *.log *.trs $(am__append_13) $(am__append_15)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 EXTRA_DIST = $(all_dist_test_scripts) $(all_dist_test_data) \
-	marshalers.list
+	$(am__append_16)
 installed_test_LTLIBRARIES = $(am__append_12)
 installed_test_SCRIPTS = $(am__append_10)
 nobase_installed_test_DATA = $(am__append_11)
@@ -808,16 +822,18 @@ AM_CFLAGS = $(GLIB_WARN_CFLAGS)
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
+test_programs = qdata boxed enums param threadtests dynamictests \
+	binding properties reference value type private closure object \
+	signal-handler $(NULL) ifaceproperties $(am__append_14)
+ifaceproperties_SOURCES = ifaceproperties.c testcommon.h
 
 # -----------------------------------------------------------------------------
-test_programs = qdata boxed enums param threadtests dynamictests \
-	binding properties reference valuearray type private closure \
-	$(NULL) ifaceproperties signals
-ifaceproperties_SOURCES = ifaceproperties.c testcommon.h
-signals_SOURCES = signals.c
-nodist_signals_SOURCES = marshalers.c marshalers.h
+
+# The marshalers test requires running a binary, so we cannot build it when
+# cross-compiling
 @CROSS_COMPILING_FALSE@glib_genmarshal = $(top_builddir)/gobject/glib-genmarshal
-@CROSS_COMPILING_TRUE@glib_genmarshal = $(GLIB_GENMARSHAL)
+@CROSS_COMPILING_FALSE@signals_SOURCES = signals.c
+@CROSS_COMPILING_FALSE@nodist_signals_SOURCES = marshalers.c marshalers.h
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1003,6 +1019,10 @@ ifaceproperties$(EXEEXT): $(ifaceproperties_OBJECTS) $(ifaceproperties_DEPENDENC
 	@rm -f ifaceproperties$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ifaceproperties_OBJECTS) $(ifaceproperties_LDADD) $(LIBS)
 
+object$(EXEEXT): $(object_OBJECTS) $(object_DEPENDENCIES) $(EXTRA_object_DEPENDENCIES) 
+	@rm -f object$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(object_OBJECTS) $(object_LDADD) $(LIBS)
+
 param$(EXEEXT): $(param_OBJECTS) $(param_DEPENDENCIES) $(EXTRA_param_DEPENDENCIES) 
 	@rm -f param$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(param_OBJECTS) $(param_LDADD) $(LIBS)
@@ -1023,6 +1043,10 @@ reference$(EXEEXT): $(reference_OBJECTS) $(reference_DEPENDENCIES) $(EXTRA_refer
 	@rm -f reference$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(reference_OBJECTS) $(reference_LDADD) $(LIBS)
 
+signal-handler$(EXEEXT): $(signal_handler_OBJECTS) $(signal_handler_DEPENDENCIES) $(EXTRA_signal_handler_DEPENDENCIES) 
+	@rm -f signal-handler$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(signal_handler_OBJECTS) $(signal_handler_LDADD) $(LIBS)
+
 signals$(EXEEXT): $(signals_OBJECTS) $(signals_DEPENDENCIES) $(EXTRA_signals_DEPENDENCIES) 
 	@rm -f signals$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(signals_OBJECTS) $(signals_LDADD) $(LIBS)
@@ -1035,9 +1059,9 @@ type$(EXEEXT): $(type_OBJECTS) $(type_DEPENDENCIES) $(EXTRA_type_DEPENDENCIES)
 	@rm -f type$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(type_OBJECTS) $(type_LDADD) $(LIBS)
 
-valuearray$(EXEEXT): $(valuearray_OBJECTS) $(valuearray_DEPENDENCIES) $(EXTRA_valuearray_DEPENDENCIES) 
-	@rm -f valuearray$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(valuearray_OBJECTS) $(valuearray_LDADD) $(LIBS)
+value$(EXEEXT): $(value_OBJECTS) $(value_DEPENDENCIES) $(EXTRA_value_DEPENDENCIES) 
+	@rm -f value$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(value_OBJECTS) $(value_LDADD) $(LIBS)
 install-installed_testSCRIPTS: $(installed_test_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(installed_test_SCRIPTS)'; test -n "$(installed_testdir)" || list=; \
@@ -1087,15 +1111,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/enums.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ifaceproperties.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/marshalers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/param.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/private.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/properties.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qdata.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reference.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/signal-handler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/signals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threadtests.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/type.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/valuearray.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -1425,9 +1451,9 @@ reference.log: reference$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-valuearray.log: valuearray$(EXEEXT)
-	@p='valuearray$(EXEEXT)'; \
-	b='valuearray'; \
+value.log: value$(EXEEXT)
+	@p='value$(EXEEXT)'; \
+	b='value'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1449,6 +1475,20 @@ private.log: private$(EXEEXT)
 closure.log: closure$(EXEEXT)
 	@p='closure$(EXEEXT)'; \
 	b='closure'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+object.log: object$(EXEEXT)
+	@p='object$(EXEEXT)'; \
+	b='object'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+signal-handler.log: signal-handler$(EXEEXT)
+	@p='signal-handler$(EXEEXT)'; \
+	b='signal-handler'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1671,15 +1711,16 @@ uninstall-am: uninstall-installed_testLTLIBRARIES \
 @ENABLE_INSTALLED_TESTS_TRUE@%.test: %$(EXEEXT) Makefile
 @ENABLE_INSTALLED_TESTS_TRUE@	$(AM_V_GEN) (echo '[Test]' > $@.tmp; \
 @ENABLE_INSTALLED_TESTS_TRUE@	echo 'Type=session' >> $@.tmp; \
-@ENABLE_INSTALLED_TESTS_TRUE@	echo 'Exec=$(installed_testdir)/$<' >> $@.tmp; \
+@ENABLE_INSTALLED_TESTS_TRUE@	echo 'Exec=$(installed_testdir)/$(notdir $<) --tap' >> $@.tmp; \
+@ENABLE_INSTALLED_TESTS_TRUE@	echo 'Output=TAP' >> $@.tmp; \
 @ENABLE_INSTALLED_TESTS_TRUE@	mv $@.tmp $@)
-signals.o: marshalers.h
+@CROSS_COMPILING_FALSE@signals.o: marshalers.h
 
-marshalers.h: Makefile.am marshalers.list
-	$(AM_V_GEN) $(glib_genmarshal) --prefix=test $(srcdir)/marshalers.list --header --valist-marshallers > marshalers.h
+@CROSS_COMPILING_FALSE@marshalers.h: Makefile.am marshalers.list
+@CROSS_COMPILING_FALSE@	$(AM_V_GEN) $(glib_genmarshal) --prefix=test $(srcdir)/marshalers.list --header --valist-marshallers > marshalers.h
 
-marshalers.c: Makefile.am marshalers.h marshalers.list
-	$(AM_V_GEN) (echo "#include \"marshalers.h\""; $(glib_genmarshal) --prefix=test $(srcdir)/marshalers.list --body --valist-marshallers) > $@.tmp && mv $@.tmp $@
+@CROSS_COMPILING_FALSE@marshalers.c: Makefile.am marshalers.h marshalers.list
+@CROSS_COMPILING_FALSE@	$(AM_V_GEN) (echo "#include \"marshalers.h\""; $(glib_genmarshal) --prefix=test $(srcdir)/marshalers.list --body --valist-marshallers) > $@.tmp && mv $@.tmp $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

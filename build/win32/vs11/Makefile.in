@@ -15,13 +15,19 @@
 @SET_MAKE@
 
 # Centralized autotools file
-# Create the Visual Studio 2012 project files
+# Create the Visual Studio 2012/2013/2015 project files
 # from the Visual Studio 2010 project files
+
+# This autotools file, from GLib, can be used in other projects
+# that have Visual Studio build support, and is copied into
+# $(srcroot)/build/.
 
 # Author: Fan, Chun-wei
 # November 05, 2012
 
-# MSVC_SLN: name of root project
+# MSVC_VER_LONG: Long Version of Visual Studio (2012, 2013, 14 and so on)
+# MSVC_VER: Short Version of Visual Studio (11 for 2012, 12 for 2013, 14 for 2015 and so on)
+# MSVC_FORMAT_VER: Use 12 for MSVC 2012 through 2015
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -130,7 +136,6 @@ am__can_run_installinfo = \
   esac
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ABS_GLIB_RUNTIME_LIBDIR = @ABS_GLIB_RUNTIME_LIBDIR@
 ABS_TAPSET_DIR = @ABS_TAPSET_DIR@
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
@@ -142,11 +147,13 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+CARBON_LIBS = @CARBON_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COCOA_LIBS = @COCOA_LIBS@
 CONFIG_STATUS_DEPENDENCIES = @CONFIG_STATUS_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -177,11 +184,8 @@ GIO = @GIO@
 GIO_MODULE_DIR = @GIO_MODULE_DIR@
 GLIBC21 = @GLIBC21@
 GLIB_BINARY_AGE = @GLIB_BINARY_AGE@
-GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
-GLIB_COMPILE_SCHEMAS = @GLIB_COMPILE_SCHEMAS@
 GLIB_DEBUG_FLAGS = @GLIB_DEBUG_FLAGS@
 GLIB_EXTRA_CFLAGS = @GLIB_EXTRA_CFLAGS@
-GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GLIB_HIDDEN_VISIBILITY_CFLAGS = @GLIB_HIDDEN_VISIBILITY_CFLAGS@
 GLIB_INTERFACE_AGE = @GLIB_INTERFACE_AGE@
 GLIB_LINK_FLAGS = @GLIB_LINK_FLAGS@
@@ -391,8 +395,6 @@ EXTRA_DIST = \
 	gthread.vcxproj.filters \
 	gio.vcxproj \
 	gio.vcxproj.filters \
-	testglib.vcxproj \
-	testglib.vcxproj.filters \
 	glib-compile-schemas.vcxproj \
 	glib-compile-schemas.vcxproj.filters \
 	gsettings.vcxproj \
@@ -405,15 +407,17 @@ EXTRA_DIST = \
 	gio-querymodules.vcxproj.filters \
 	gdbus.vcxproj \
 	gdbus.vcxproj.filters \
-	install.vcxproj	\
+	glib-install.vcxproj	\
+	glib-install.vcxproj.filters	\
 	glib-build-defines.props	\
 	glib-install.props	\
 	glib-version-paths.props	\
-	glibprepbuild.props
+	glib-gen-srcs.props
 
 DISTCLEANFILES = $(EXTRA_DIST)
-MSVC_SLN = glib
-VCXPROJ_FILES = 
+MSVC_VER = 11
+MSVC_FORMAT_VER = 12
+MSVC_VER_LONG = 2012
 all: all-am
 
 .SUFFIXES:
@@ -607,30 +611,36 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-$(MSVC_SLN).sln: $(top_srcdir)/build/win32/vs10/$(MSVC_SLN).sln create_vcxproj copy_filters create_props
-	cat $(top_srcdir)/build/win32/vs10/$(MSVC_SLN).sln | sed 's/11\.00/12\.00/g' | sed 's/2010/2012/g' > $(top_builddir)/build/win32/vs11/$(MSVC_SLN).sln
+%.sln:
+	sed 's/11\.00/$(MSVC_FORMAT_VER)\.00/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+	sed 's/2010/$(MSVC_VER_LONG)/g' < $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@
+	rm $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
 
-README.txt: $(top_srcdir)/build/win32/vs10/README.txt
-	cat $(top_srcdir)/build/win32/vs10/README.txt | sed 's/vs10/vs11/g' | sed 's/VS10/VS11/g' > $(top_builddir)/build/win32/vs11/README.txt
+%.txt:
+	sed 's/vs10/vs$(MSVC_VER)/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+	sed 's/VS10/VS$(MSVC_VER)/g' < $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@
+	rm $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
 
-create_vcxproj:
-	for F in `(cd $(top_builddir)/build/win32/vs10 && ls *.vcxproj)`; do \
-		case $$F in \
-			*)	cat $(top_builddir)/build/win32/vs10/$$F | sed 's/v100/v110/g' > $(top_builddir)/build/win32/vs11/$$F \
-			;; \
-		esac; \
-	done
+%.vcxproj:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		sed 's/v100/v$(MSVC_VER)0/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		sed 's/v100/v$(MSVC_VER)0/g' < $(top_builddir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
 
-create_props:
-	for F in `(cd $(top_builddir)/build/win32/vs10 && ls *.props)`; do \
-		case $$F in \
-			*)	cat $(top_builddir)/build/win32/vs10/$$F | sed 's/10/11/g' > $(top_builddir)/build/win32/vs11/$$F \
-			;; \
-		esac; \
-	done
+%.props:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		sed 's/<VSVer>10<\/VSVer>/<VSVer>$(MSVC_VER)<\/VSVer>/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		sed 's/<VSVer>10<\/VSVer>/<VSVer>$(MSVC_VER)<\/VSVer>/g' < $(top_builddir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
 
-copy_filters:
-	cp  $(top_srcdir)/build/win32/vs10/*.vcxproj.filters $(top_builddir)/build/win32/vs11/
+%.vcxproj.filters:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		cp $(top_srcdir)/build/win32/vs10/$@ $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		cp $(top_builddir)/build/win32/vs10/$@ $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

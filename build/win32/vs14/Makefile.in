@@ -13,6 +13,21 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
+
+# Centralized autotools file
+# Create the Visual Studio 2012/2013/2015 project files
+# from the Visual Studio 2010 project files
+
+# This autotools file, from GLib, can be used in other projects
+# that have Visual Studio build support, and is copied into
+# $(srcroot)/build/.
+
+# Author: Fan, Chun-wei
+# November 05, 2012
+
+# MSVC_VER_LONG: Long Version of Visual Studio (2012, 2013, 14 and so on)
+# MSVC_VER: Short Version of Visual Studio (11 for 2012, 12 for 2013, 14 for 2015 and so on)
+# MSVC_FORMAT_VER: Use 12 for MSVC 2012 through 2015
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -77,9 +92,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = build/win32/vs10
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/glib-version-paths.props.in
+DIST_COMMON = $(top_srcdir)/build/Makefile-newvs.am \
+	$(srcdir)/Makefile.in $(srcdir)/Makefile.am
+subdir = build/win32/vs14
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4macros/attributes.m4 \
 	$(top_srcdir)/m4macros/glibtests.m4 \
@@ -98,7 +113,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = glib-version-paths.props
+CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -361,65 +376,52 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-GENERATED_ITEMS = \
-	glib.vcxproj	\
-	glib.vcxproj.filters	\
-	gobject.vcxproj	\
-	gobject.vcxproj.filters	\
-	gio.vcxproj	\
-	gio.vcxproj.filters	\
-	glib-compile-schemas.vcxproj	\
-	glib-compile-schemas.vcxproj.filters	\
-	glib-compile-resources.vcxproj	\
-	glib-compile-resources.vcxproj.filters	\
-	glib-version-paths.props	\
-	glib-install.props
-
-MSVC10_HEADERS_LIST = glib.vs10.headers gobject.vs10.headers gio.vs10.headers
 EXTRA_DIST = \
-	README.txt			\
-	glib.sln			\
-	glib.vcxprojin			\
-	glib.vcxproj.filtersin		\
-	glib-genmarshal.vcxproj		\
-	glib-genmarshal.vcxproj.filters		\
-	gspawn-win32-helper-console.vcxproj	\
-	gspawn-win32-helper-console.vcxproj.filters	\
-	gspawn-win32-helper.vcxproj		\
-	gspawn-win32-helper.vcxproj.filters	\
-	gmodule.vcxproj			\
-	gmodule.vcxproj.filters		\
-	gobject.vcxprojin		\
-	gobject.vcxproj.filtersin	\
-	gthread.vcxproj			\
-	gthread.vcxproj.filters		\
-	gio.vcxprojin			\
-	gio.vcxproj.filtersin		\
-	glib-compile-schemas.vcxprojin		\
-	glib-compile-schemas.vcxproj.filtersin		\
-	gsettings.vcxproj		\
-	gsettings.vcxproj.filters		\
-	glib-compile-resources.vcxprojin		\
-	glib-compile-resources.vcxproj.filtersin	\
-	gresource.vcxproj		\
-	gresource.vcxproj.filters		\
-	gio-querymodules.vcxproj		\
-	gio-querymodules.vcxproj.filters		\
-	gdbus.vcxproj			\
-	gdbus.vcxproj.filters		\
-	glib-install.vcxproj		\
+	README.txt \
+	glib.sln \
+	glib.vcxproj \
+	glib.vcxproj.filters \
+	glib-genmarshal.vcxproj \
+	glib-genmarshal.vcxproj.filters \
+	gspawn-win32-helper-console.vcxproj \
+	gspawn-win32-helper-console.vcxproj.filters \
+	gspawn-win32-helper.vcxproj \
+	gspawn-win32-helper.vcxproj.filters \
+	gmodule.vcxproj \
+	gmodule.vcxproj.filters \
+	gobject.vcxproj \
+	gobject.vcxproj.filters \
+	gthread.vcxproj \
+	gthread.vcxproj.filters \
+	gio.vcxproj \
+	gio.vcxproj.filters \
+	glib-compile-schemas.vcxproj \
+	glib-compile-schemas.vcxproj.filters \
+	gsettings.vcxproj \
+	gsettings.vcxproj.filters \
+	glib-compile-resources.vcxproj \
+	glib-compile-resources.vcxproj.filters \
+	gresource.vcxproj \
+	gresource.vcxproj.filters \
+	gio-querymodules.vcxproj \
+	gio-querymodules.vcxproj.filters \
+	gdbus.vcxproj \
+	gdbus.vcxproj.filters \
+	glib-install.vcxproj	\
 	glib-install.vcxproj.filters	\
 	glib-build-defines.props	\
-	glib-install.propsin		\
-	glib-version-paths.props.in	\
-	glib-gen-srcs.props		\
-	$(GENERATED_ITEMS)
+	glib-install.props	\
+	glib-version-paths.props	\
+	glib-gen-srcs.props
 
-DISTCLEANFILES = $(GENERATED_ITEMS)
+DISTCLEANFILES = $(EXTRA_DIST)
+MSVC_VER = 14
+MSVC_FORMAT_VER = 12
+MSVC_VER_LONG = 14
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/build/Makefile-newvs.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -428,9 +430,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu build/win32/vs10/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu build/win32/vs14/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu build/win32/vs10/Makefile
+	  $(AUTOMAKE) --gnu build/win32/vs14/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -440,6 +442,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(top_srcdir)/build/Makefile-newvs.am:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -449,8 +452,6 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-glib-version-paths.props: $(top_builddir)/config.status $(srcdir)/glib-version-paths.props.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -610,9 +611,36 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-glib-install.props: $(top_srcdir)/build/win32/vs10/glib-install.propsin $(MSVC10_HEADERS_LIST)
-	$(CPP) -P - <$(top_srcdir)/build/win32/vs10/glib-install.propsin >$@
-	rm $(MSVC10_HEADERS_LIST)
+%.sln:
+	sed 's/11\.00/$(MSVC_FORMAT_VER)\.00/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+	sed 's/2010/$(MSVC_VER_LONG)/g' < $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@
+	rm $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+
+%.txt:
+	sed 's/vs10/vs$(MSVC_VER)/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+	sed 's/VS10/VS$(MSVC_VER)/g' < $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@
+	rm $(top_builddir)/build/win32/vs$(MSVC_VER)/$@.tmp
+
+%.vcxproj:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		sed 's/v100/v$(MSVC_VER)0/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		sed 's/v100/v$(MSVC_VER)0/g' < $(top_builddir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
+
+%.props:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		sed 's/<VSVer>10<\/VSVer>/<VSVer>$(MSVC_VER)<\/VSVer>/g' < $(top_srcdir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		sed 's/<VSVer>10<\/VSVer>/<VSVer>$(MSVC_VER)<\/VSVer>/g' < $(top_builddir)/build/win32/vs10/$@ > $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
+
+%.vcxproj.filters:
+	if test -e $(top_srcdir)/build/win32/vs10/$@; then \
+		cp $(top_srcdir)/build/win32/vs10/$@ $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	else \
+		cp $(top_builddir)/build/win32/vs10/$@ $(top_builddir)/build/win32/vs$(MSVC_VER)/$@; \
+	fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

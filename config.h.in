@@ -53,15 +53,6 @@
 /* Define to the GLIB minor version */
 #undef GLIB_MINOR_VERSION
 
-/* Have inline keyword */
-#undef G_HAVE_INLINE
-
-/* Have __inline keyword */
-#undef G_HAVE___INLINE
-
-/* Have __inline__ keyword */
-#undef G_HAVE___INLINE__
-
 /* A 'va_copy' style function */
 #undef G_VA_COPY
 
@@ -74,9 +65,6 @@
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
 #undef HAVE_ALLOCA_H
-
-/* Define to 1 if you have the `atexit' function. */
-#undef HAVE_ATEXIT
 
 /* Define to 1 if you have the <attr/xattr.h> header file. */
 #undef HAVE_ATTR_XATTR_H
@@ -94,9 +82,6 @@
 
 /* define to 1 if Carbon is available */
 #undef HAVE_CARBON
-
-/* Define to 1 if you have the `chown' function. */
-#undef HAVE_CHOWN
 
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
@@ -122,12 +107,6 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-#undef HAVE_DOPRNT
-
-/* define for working do while(0) macros */
-#undef HAVE_DOWHILE_MACROS
 
 /* Define to 1 if using dtrace probes. */
 #undef HAVE_DTRACE
@@ -162,9 +141,6 @@
 /* Define to 1 if you have the `fdwalk' function. */
 #undef HAVE_FDWALK
 
-/* Define to 1 if you have the <float.h> header file. */
-#undef HAVE_FLOAT_H
-
 /* Define to 1 if you have the <fstab.h> header file. */
 #undef HAVE_FSTAB_H
 
@@ -174,17 +150,14 @@
 /* we have the futex(2) system call */
 #undef HAVE_FUTEX
 
-/* Define to 1 if you have the `getcwd' function. */
-#undef HAVE_GETCWD
-
 /* Define to 1 if you have the `getc_unlocked' function. */
 #undef HAVE_GETC_UNLOCKED
 
 /* Define to 1 if you have the `getfsstat' function. */
 #undef HAVE_GETFSSTAT
 
-/* Define to 1 if you have the `getgrgid' function. */
-#undef HAVE_GETGRGID
+/* Define to 1 if you have the `getgrgid_r' function. */
+#undef HAVE_GETGRGID_R
 
 /* Define to 1 if you have the `getmntent_r' function. */
 #undef HAVE_GETMNTENT_R
@@ -192,8 +165,8 @@
 /* Define to 1 if you have the `getprotobyname_r' function. */
 #undef HAVE_GETPROTOBYNAME_R
 
-/* Define to 1 if you have the `getpwuid' function. */
-#undef HAVE_GETPWUID
+/* Define to 1 if you have the `getpwuid_r' function. */
+#undef HAVE_GETPWUID_R
 
 /* Define to 1 if you have the `getresuid' function. */
 #undef HAVE_GETRESUID
@@ -209,9 +182,6 @@
 
 /* define to use system printf */
 #undef HAVE_GOOD_PRINTF
-
-/* Define to 1 if you have the <grp.h> header file. */
-#undef HAVE_GRP_H
 
 /* Define to 1 if you have the `hasmntopt' function. */
 #undef HAVE_HASMNTOPT
@@ -274,12 +244,6 @@
 /* Define if libelf is available */
 #undef HAVE_LIBELF
 
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
-
-/* Define to 1 if you have the `link' function. */
-#undef HAVE_LINK
-
 /* Define to 1 if you have the <linux/magic.h> header file. */
 #undef HAVE_LINUX_MAGIC_H
 
@@ -301,17 +265,20 @@
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 
+/* Define to 1 if you have the <mach/mach_time.h> header file. */
+#undef HAVE_MACH_MACH_TIME_H
+
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the `mbrtowc' function. */
+#undef HAVE_MBRTOWC
 
 /* Define to 1 if you have the `memalign' function. */
 #undef HAVE_MEMALIGN
 
 /* Define to 1 if you have the `memmem' function. */
 #undef HAVE_MEMMEM
-
-/* Define to 1 if you have the `memmove' function. */
-#undef HAVE_MEMMOVE
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -331,26 +298,14 @@
 /* Define to 1 if you have the `newlocale' function. */
 #undef HAVE_NEWLOCALE
 
-/* Have non-POSIX function getgrgid_r */
-#undef HAVE_NONPOSIX_GETGRGID_R
-
-/* Have non-POSIX function getpwuid_r */
-#undef HAVE_NONPOSIX_GETPWUID_R
-
-/* Define to 1 if you have the `on_exit' function. */
-#undef HAVE_ON_EXIT
+/* open option O_DIRECTORY */
+#undef HAVE_OPEN_O_DIRECTORY
 
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
 
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
-
-/* Have POSIX function getgrgid_r */
-#undef HAVE_POSIX_GETGRGID_R
-
-/* Have POSIX function getpwuid_r */
-#undef HAVE_POSIX_GETPWUID_R
 
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
@@ -364,20 +319,20 @@
 /* Have function pthread_condattr_setclock */
 #undef HAVE_PTHREAD_CONDATTR_SETCLOCK
 
-/* Have function pthread_cond_timedwait_monotonic */
-#undef HAVE_PTHREAD_COND_TIMEDWAIT_MONOTONIC
+/* Have function pthread_cond_timedwait_relative_np */
+#undef HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE_NP
 
-/* Have function pthread_cond_timedwait_monotonic_np */
-#undef HAVE_PTHREAD_COND_TIMEDWAIT_MONOTONIC_NP
+/* Have function pthread_setname_np(const char*) */
+#undef HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
 
-/* Define to 1 if you have the <pwd.h> header file. */
-#undef HAVE_PWD_H
-
 /* Define to 1 if you have the `readlink' function. */
 #undef HAVE_READLINK
+
+/* Define to 1 if you have the `recvmmsg' function. */
+#undef HAVE_RECVMMSG
 
 /* Define to 1 if you have the 'res_init' function. */
 #undef HAVE_RES_INIT
@@ -391,11 +346,11 @@
 /* Define to 1 if you have the <selinux/selinux.h> header file. */
 #undef HAVE_SELINUX_SELINUX_H
 
+/* Define to 1 if you have the `sendmmsg' function. */
+#undef HAVE_SENDMMSG
+
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV
-
-/* Define to 1 if you have the `setlocale' function. */
-#undef HAVE_SETLOCALE
 
 /* Define to 1 if you have the `setmntent' function. */
 #undef HAVE_SETMNTENT
@@ -415,9 +370,6 @@
 /* Define to 1 if you have the `statvfs' function. */
 #undef HAVE_STATVFS
 
-/* Define to 1 if you have the <stddef.h> header file. */
-#undef HAVE_STDDEF_H
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -434,8 +386,8 @@
 /* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
-/* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -448,6 +400,9 @@
 
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
@@ -481,6 +436,18 @@
 
 /* Define to 1 if `st_atim.tv_nsec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
+
+/* Define to 1 if `st_birthtim' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIM
+
+/* Define to 1 if `st_birthtime' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIME
+
+/* Define to 1 if `st_birthtimensec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC
+
+/* Define to 1 if `st_birthtim.tv_nsec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC
 
 /* Define to 1 if `st_blksize' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLKSIZE
@@ -525,9 +492,6 @@
 /* Define to 1 if you have the <sys/inotify.h> header file. */
 #undef HAVE_SYS_INOTIFY_H
 
-/* Define to 1 if you have the <sys/mkdev.h> header file. */
-#undef HAVE_SYS_MKDEV_H
-
 /* Define to 1 if you have the <sys/mntctl.h> header file. */
 #undef HAVE_SYS_MNTCTL_H
 
@@ -543,9 +507,6 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
-
-/* Define to 1 if you have the <sys/poll.h> header file. */
-#undef HAVE_SYS_POLL_H
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 #undef HAVE_SYS_PRCTL_H
@@ -568,17 +529,11 @@
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 #undef HAVE_SYS_SYSCTL_H
 
-/* Define to 1 if you have the <sys/times.h> header file. */
-#undef HAVE_SYS_TIMES_H
-
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the <sys/uio.h> header file. */
-#undef HAVE_SYS_UIO_H
 
 /* Define to 1 if you have the <sys/vfstab.h> header file. */
 #undef HAVE_SYS_VFSTAB_H
@@ -588,9 +543,6 @@
 
 /* Define to 1 if you have the <sys/vmount.h> header file. */
 #undef HAVE_SYS_VMOUNT_H
-
-/* Define to 1 if you have the <sys/wait.h> header file. */
-#undef HAVE_SYS_WAIT_H
 
 /* Define to 1 if you have the <sys/xattr.h> header file. */
 #undef HAVE_SYS_XATTR_H
@@ -623,23 +575,23 @@
 /* Define to 1 if you have the `vasprintf' function. */
 #undef HAVE_VASPRINTF
 
-/* Define to 1 if you have the `vprintf' function. */
-#undef HAVE_VPRINTF
-
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
 /* Define if you have the 'wchar_t' type. */
 #undef HAVE_WCHAR_T
 
+/* Define to 1 if you have the `wcrtomb' function. */
+#undef HAVE_WCRTOMB
+
 /* Define to 1 if you have the `wcslen' function. */
 #undef HAVE_WCSLEN
 
+/* Define to 1 if you have the `wcsnlen' function. */
+#undef HAVE_WCSNLEN
+
 /* Define if you have the 'wint_t' type. */
 #undef HAVE_WINT_T
-
-/* Have a working bcopy */
-#undef HAVE_WORKING_BCOPY
 
 /* Define to 1 if xattr is available */
 #undef HAVE_XATTR
@@ -656,6 +608,14 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
 
 /* didn't find fd_set */
 #undef NO_FD_SET

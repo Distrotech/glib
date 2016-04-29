@@ -14,11 +14,6 @@
 
 @SET_MAKE@
 
-# -*- mode: makefile -*-
-
-####################################
-# Everything below here is generic #
-####################################
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -83,14 +78,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(top_srcdir)/gtk-doc.make $(srcdir)/Makefile.in \
-	$(srcdir)/Makefile.am $(srcdir)/version.xml.in
-@ENABLE_MAN_TRUE@am__append_1 = \
-@ENABLE_MAN_TRUE@	glib-mkenums.1 		\
-@ENABLE_MAN_TRUE@	glib-genmarshal.1 	\
-@ENABLE_MAN_TRUE@	gobject-query.1
-
-subdir = docs/reference/gobject
+subdir = gio/tests/modules
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
+	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4macros/attributes.m4 \
 	$(top_srcdir)/m4macros/glibtests.m4 \
@@ -109,27 +99,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = version.xml
+CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-AM_V_P = $(am__v_P_@AM_V@)
-am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
-am__v_P_0 = false
-am__v_P_1 = :
-AM_V_GEN = $(am__v_GEN_@AM_V@)
-am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
-am__v_GEN_0 = @echo "  GEN     " $@;
-am__v_GEN_1 = 
-AM_V_at = $(am__v_at_@AM_V@)
-am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
-am__v_at_0 = @
-am__v_at_1 = 
-SOURCES =
-DIST_SOURCES =
-am__can_run_installinfo = \
-  case $$AM_UPDATE_INFO_DIR in \
-    n|no|NO) false;; \
-    *) (install-info --version) >/dev/null 2>&1;; \
-  esac
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -157,11 +128,100 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-man1dir = $(mandir)/man1
-am__installdirs = "$(DESTDIR)$(man1dir)"
-NROFF = nroff
-MANS = $(man_MANS)
+am__installdirs = "$(DESTDIR)$(testmoduledir)"
+LTLIBRARIES = $(noinst_LTLIBRARIES) $(testmodule_LTLIBRARIES)
+am__DEPENDENCIES_1 =
+am__DEPENDENCIES_2 = $(top_builddir)/gio/libgio-2.0.la \
+	$(top_builddir)/gobject/libgobject-2.0.la \
+	$(top_builddir)/gmodule/libgmodule-2.0.la \
+	$(top_builddir)/glib/libglib-2.0.la $(am__DEPENDENCIES_1)
+libtestmodulea_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_libtestmodulea_la_OBJECTS = test-module-a.lo
+libtestmodulea_la_OBJECTS = $(am_libtestmodulea_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+libtestmodulea_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(libtestmodulea_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ENABLE_ALWAYS_BUILD_TESTS_FALSE@am_libtestmodulea_la_rpath =
+@ENABLE_ALWAYS_BUILD_TESTS_TRUE@am_libtestmodulea_la_rpath =
+@ENABLE_INSTALLED_TESTS_TRUE@am_libtestmodulea_la_rpath = -rpath \
+@ENABLE_INSTALLED_TESTS_TRUE@	$(testmoduledir)
+libtestmoduleb_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_libtestmoduleb_la_OBJECTS = test-module-b.lo
+libtestmoduleb_la_OBJECTS = $(am_libtestmoduleb_la_OBJECTS)
+libtestmoduleb_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(libtestmoduleb_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ENABLE_ALWAYS_BUILD_TESTS_FALSE@am_libtestmoduleb_la_rpath =
+@ENABLE_ALWAYS_BUILD_TESTS_TRUE@am_libtestmoduleb_la_rpath =
+@ENABLE_INSTALLED_TESTS_TRUE@am_libtestmoduleb_la_rpath = -rpath \
+@ENABLE_INSTALLED_TESTS_TRUE@	$(testmoduledir)
+AM_V_P = $(am__v_P_@AM_V@)
+am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
+am__v_P_0 = false
+am__v_P_1 = :
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 = 
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 = 
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
+depcomp = $(SHELL) $(top_srcdir)/depcomp
+am__depfiles_maybe = depfiles
+am__mv = mv -f
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
+SOURCES = $(libtestmodulea_la_SOURCES) $(libtestmoduleb_la_SOURCES)
+DIST_SOURCES = $(libtestmodulea_la_SOURCES) \
+	$(libtestmoduleb_la_SOURCES)
+am__can_run_installinfo = \
+  case $$AM_UPDATE_INFO_DIR in \
+    n|no|NO) false;; \
+    *) (install-info --version) >/dev/null 2>&1;; \
+  esac
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
+# Read a list of newline-separated strings from the standard input,
+# and print each of them once, without duplicates.  Input order is
+# *not* preserved.
+am__uniquify_input = $(AWK) '\
+  BEGIN { nonempty = 0; } \
+  { items[$$0] = 1; nonempty = 1; } \
+  END { if (nonempty) { for (i in items) print i; }; } \
+'
+# Make sure the list of sources is unique.  This is necessary because,
+# e.g., the same source file might be shared among _SOURCES variables
+# for different programs/libraries.
+am__define_uniq_tagged_files = \
+  list='$(am__tagged_files)'; \
+  unique=`for i in $$list; do \
+    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+  done | $(am__uniquify_input)`
+ETAGS = etags
+CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ABS_TAPSET_DIR = @ABS_TAPSET_DIR@
 ACLOCAL = @ACLOCAL@
@@ -403,131 +463,42 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = 1.6
+NULL = 
+LDADD = \
+	$(top_builddir)/gio/libgio-2.0.la               \
+	$(top_builddir)/gobject/libgobject-2.0.la       \
+	$(top_builddir)/gmodule/libgmodule-2.0.la       \
+	$(top_builddir)/glib/libglib-2.0.la             \
+	$(NULL)
 
-# The name of the module.
-DOC_MODULE = gobject
-
-# The top-level SGML file.
-DOC_MAIN_SGML_FILE = gobject-docs.xml
-
-# The directory containing the source code. Relative to $(srcdir)
-DOC_SOURCE_DIR = $(top_srcdir)/gobject $(top_builddir)/gobject
-
-# Extra options to supply to gtkdoc-scan
-SCAN_OPTIONS = --deprecated-guards="G_DISABLE_DEPRECATED" \
-             --ignore-decorators="G_GNUC_INTERNAL|G_GNUC_WARN_UNUSED_RESULT"
-
-
-# Extra options to supply to gtkdoc-mkdb
-MKDB_OPTIONS = --output-format=xml --name-space=g
-
-# Used for dependencies
-HFILE_GLOB = $(top_srcdir)/gobject/*.h
-CFILE_GLOB = $(top_srcdir)/gobject/*.c
-
-# Headers to ignore
-IGNORE_HFILES = \
-	tests			\
-	gatomicarray.h		\
-	gobject_trace.h		\
-	gtype-private.h
-
-
-# CFLAGS and LDFLAGS for compiling scan program. Only needed
-# if $(DOC_MODULE).types is non-empty.
 AM_CPPFLAGS = \
-	-I$(srcdir) 			\
-	$(gobject_INCLUDES) 		\
-	$(GLIB_DEBUG_FLAGS)
+	$(gio_INCLUDES) $(GLIB_DEBUG_FLAGS) 		\
+	-I$(top_builddir)/gio 				\
+	-I$(top_srcdir)/gio				\
+	$(NULL)
 
-GTKDOC_LIBS = \
-	$(top_builddir)/glib/libglib-2.0.la	\
-	$(top_builddir)/gobject/libgobject-2.0.la
+modules = \
+	libtestmodulea.la 				\
+	libtestmoduleb.la				\
+	$(NULL)
 
-
-# Images to copy into HTML directory
-HTML_IMAGES = \
-	images/glue.png
-
-
-# Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
-content_files = version.xml 		\
-		glib-mkenums.xml 	\
-		glib-genmarshal.xml	\
-		gobject-query.xml \
-		tut_gobject.xml \
-		tut_gsignal.xml \
-		tut_gtype.xml \
-		tut_howto.xml \
-		tut_intro.xml \
-		tut_tools.xml
-
-
-# Extra options to supply to gtkdoc-fixref
-FIXXREF_OPTIONS = --extra-dir=$(srcdir)/../glib/html
-@GTK_DOC_USE_LIBTOOL_FALSE@GTKDOC_CC = $(CC) $(INCLUDES) $(GTKDOC_DEPS_CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-@GTK_DOC_USE_LIBTOOL_TRUE@GTKDOC_CC = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(INCLUDES) $(GTKDOC_DEPS_CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-@GTK_DOC_USE_LIBTOOL_FALSE@GTKDOC_LD = $(CC) $(GTKDOC_DEPS_LIBS) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
-@GTK_DOC_USE_LIBTOOL_TRUE@GTKDOC_LD = $(LIBTOOL) --tag=CC --mode=link $(CC) $(GTKDOC_DEPS_LIBS) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
-@GTK_DOC_USE_LIBTOOL_FALSE@GTKDOC_RUN = 
-@GTK_DOC_USE_LIBTOOL_TRUE@GTKDOC_RUN = $(LIBTOOL) --mode=execute
-
-# We set GPATH here; this gives us semantics for GNU make
-# which are more like other make's VPATH, when it comes to
-# whether a source that is a target of one rule is then
-# searched for in VPATH/GPATH.
-#
-GPATH = $(srcdir)
-TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE)
-SETUP_FILES = \
-	$(content_files)		\
-	$(DOC_MAIN_SGML_FILE)		\
-	$(DOC_MODULE)-sections.txt	\
-	$(DOC_MODULE)-overrides.txt
-
-
-# Other files to distribute
-EXTRA_DIST = $(HTML_IMAGES) $(SETUP_FILES) gobject.cI version.xml.in \
-	$(man_MANS)
-DOC_STAMPS = setup-build.stamp scan-build.stamp sgml-build.stamp \
-	html-build.stamp pdf-build.stamp \
-	sgml.stamp html.stamp pdf.stamp
-
-SCANOBJ_FILES = \
-	$(DOC_MODULE).args 	 \
-	$(DOC_MODULE).hierarchy  \
-	$(DOC_MODULE).interfaces \
-	$(DOC_MODULE).prerequisites \
-	$(DOC_MODULE).signals
-
-REPORT_FILES = \
-	$(DOC_MODULE)-undocumented.txt \
-	$(DOC_MODULE)-undeclared.txt \
-	$(DOC_MODULE)-unused.txt
-
-CLEANFILES = $(SCANOBJ_FILES) $(REPORT_FILES) $(DOC_STAMPS) \
-	$(man_MANS)
-@ENABLE_GTK_DOC_TRUE@@GTK_DOC_BUILD_HTML_FALSE@HTML_BUILD_STAMP = 
-@ENABLE_GTK_DOC_TRUE@@GTK_DOC_BUILD_HTML_TRUE@HTML_BUILD_STAMP = html-build.stamp
-@ENABLE_GTK_DOC_TRUE@@GTK_DOC_BUILD_PDF_FALSE@PDF_BUILD_STAMP = 
-@ENABLE_GTK_DOC_TRUE@@GTK_DOC_BUILD_PDF_TRUE@PDF_BUILD_STAMP = pdf-build.stamp
-
-########################################################################
-man_MANS = $(am__append_1)
-@ENABLE_MAN_TRUE@XSLTPROC_FLAGS = \
-@ENABLE_MAN_TRUE@        --nonet \
-@ENABLE_MAN_TRUE@        --stringparam man.output.quietly 1 \
-@ENABLE_MAN_TRUE@        --stringparam funcsynopsis.style ansi \
-@ENABLE_MAN_TRUE@        --stringparam man.th.extra1.suppress 1 \
-@ENABLE_MAN_TRUE@        --stringparam man.authors.section.enabled 0 \
-@ENABLE_MAN_TRUE@        --stringparam man.copyright.section.enabled 0
-
+@ENABLE_ALWAYS_BUILD_TESTS_TRUE@noinst_LTLIBRARIES = $(modules)
+@ENABLE_ALWAYS_BUILD_TESTS_FALSE@check_LTLIBRARIES = $(modules)
+@ENABLE_INSTALLED_TESTS_TRUE@testmoduledir = $(installed_testdir)/modules
+@ENABLE_INSTALLED_TESTS_TRUE@testmodule_LTLIBRARIES = $(modules)
+# See comment in Makefile.am one level up
+@ENABLE_INSTALLED_TESTS_FALSE@rpath_hack = -rpath /
+libtestmodulea_la_SOURCES = test-module-a.c
+libtestmodulea_la_LIBADD = $(LDADD)
+libtestmodulea_la_LDFLAGS = $(LDFLAGS) -no-undefined -avoid-version $(rpath_hack)
+libtestmoduleb_la_SOURCES = test-module-b.c
+libtestmoduleb_la_LIBADD = $(LDADD)
+libtestmoduleb_la_LDFLAGS = $(LDFLAGS) -no-undefined -avoid-version $(rpath_hack)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .1 .xml
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/gtk-doc.make $(am__configure_deps)
+.SUFFIXES: .c .lo .o .obj
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -536,9 +507,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu docs/reference/gobject/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu gio/tests/modules/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu docs/reference/gobject/Makefile
+	  $(AUTOMAKE) --gnu gio/tests/modules/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -548,7 +519,6 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
-$(top_srcdir)/gtk-doc.make:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -558,63 +528,157 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-version.xml: $(top_builddir)/config.status $(srcdir)/version.xml.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+
+clean-checkLTLIBRARIES:
+	-test -z "$(check_LTLIBRARIES)" || rm -f $(check_LTLIBRARIES)
+	@list='$(check_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
+install-testmoduleLTLIBRARIES: $(testmodule_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	@list='$(testmodule_LTLIBRARIES)'; test -n "$(testmoduledir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(testmoduledir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(testmoduledir)" || exit 1; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(testmoduledir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(testmoduledir)"; \
+	}
+
+uninstall-testmoduleLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(testmodule_LTLIBRARIES)'; test -n "$(testmoduledir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(testmoduledir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(testmoduledir)/$$f"; \
+	done
+
+clean-testmoduleLTLIBRARIES:
+	-test -z "$(testmodule_LTLIBRARIES)" || rm -f $(testmodule_LTLIBRARIES)
+	@list='$(testmodule_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
+libtestmodulea.la: $(libtestmodulea_la_OBJECTS) $(libtestmodulea_la_DEPENDENCIES) $(EXTRA_libtestmodulea_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libtestmodulea_la_LINK) $(am_libtestmodulea_la_rpath) $(libtestmodulea_la_OBJECTS) $(libtestmodulea_la_LIBADD) $(LIBS)
+
+libtestmoduleb.la: $(libtestmoduleb_la_OBJECTS) $(libtestmoduleb_la_DEPENDENCIES) $(EXTRA_libtestmoduleb_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libtestmoduleb_la_LINK) $(am_libtestmoduleb_la_rpath) $(libtestmoduleb_la_OBJECTS) $(libtestmoduleb_la_LIBADD) $(LIBS)
+
+mostlyclean-compile:
+	-rm -f *.$(OBJEXT)
+
+distclean-compile:
+	-rm -f *.tab.c
+
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-module-a.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-module-b.Plo@am__quote@
+
+.c.o:
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
+
+.c.obj:
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-man1: $(man_MANS)
-	@$(NORMAL_INSTALL)
-	@list1=''; \
-	list2='$(man_MANS)'; \
-	test -n "$(man1dir)" \
-	  && test -n "`echo $$list1$$list2`" \
-	  || exit 0; \
-	echo " $(MKDIR_P) '$(DESTDIR)$(man1dir)'"; \
-	$(MKDIR_P) "$(DESTDIR)$(man1dir)" || exit 1; \
-	{ for i in $$list1; do echo "$$i"; done;  \
-	if test -n "$$list2"; then \
-	  for i in $$list2; do echo "$$i"; done \
-	    | sed -n '/\.1[a-z]*$$/p'; \
-	fi; \
-	} | while read p; do \
-	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; echo "$$p"; \
-	done | \
-	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
-	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
-	sed 'N;N;s,\n, ,g' | { \
-	list=; while read file base inst; do \
-	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
-	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
-	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst" || exit $$?; \
+
+ID: $(am__tagged_files)
+	$(am__define_uniq_tagged_files); mkid -fID $$unique
+tags: tags-am
+TAGS: tags
+
+tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	set x; \
+	here=`pwd`; \
+	$(am__define_uniq_tagged_files); \
+	shift; \
+	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
+	  test -n "$$unique" || unique=$$empty_fix; \
+	  if test $$# -gt 0; then \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      "$$@" $$unique; \
+	  else \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      $$unique; \
 	  fi; \
-	done; \
-	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
-	while read files; do \
-	  test -z "$$files" || { \
-	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man1dir)'"; \
-	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man1dir)" || exit $$?; }; \
-	done; }
+	fi
+ctags: ctags-am
 
-uninstall-man1:
-	@$(NORMAL_UNINSTALL)
-	@list=''; test -n "$(man1dir)" || exit 0; \
-	files=`{ for i in $$list; do echo "$$i"; done; \
-	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
-	  sed -n '/\.1[a-z]*$$/p'; \
-	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
-	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
-	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
-tags TAGS:
+CTAGS: ctags
+ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	$(am__define_uniq_tagged_files); \
+	test -z "$(CTAGS_ARGS)$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$unique
 
-ctags CTAGS:
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && $(am__cd) $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) "$$here"
+cscopelist: cscopelist-am
 
-cscope cscopelist:
+cscopelist-am: $(am__tagged_files)
+	list='$(am__tagged_files)'; \
+	case "$(srcdir)" in \
+	  [\\/]* | ?:[\\/]*) sdir="$(srcdir)" ;; \
+	  *) sdir=$(subdir)/$(srcdir) ;; \
+	esac; \
+	for i in $$list; do \
+	  if test -f "$$i"; then \
+	    echo "$(subdir)/$$i"; \
+	  else \
+	    echo "$$sdir/$$i"; \
+	  fi; \
+	done >> $(top_builddir)/cscope.files
 
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
@@ -646,14 +710,12 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
-	  dist-hook
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LTLIBRARIES)
 check: check-am
-all-am: Makefile $(MANS) all-local
+all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(man1dir)"; do \
+	for dir in "$(DESTDIR)$(testmoduledir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -678,7 +740,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -689,11 +750,15 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local mostlyclean-am
+clean-am: clean-checkLTLIBRARIES clean-generic clean-libtool \
+	clean-noinstLTLIBRARIES clean-testmoduleLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic distclean-local
+distclean-am: clean-am distclean-compile distclean-generic \
+	distclean-tags
 
 dvi: dvi-am
 
@@ -707,7 +772,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local install-man
+install-data-am: install-testmoduleLTLIBRARIES
 
 install-dvi: install-dvi-am
 
@@ -723,7 +788,7 @@ install-info: install-info-am
 
 install-info-am:
 
-install-man: install-man1
+install-man:
 
 install-pdf: install-pdf-am
 
@@ -736,13 +801,14 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-maintainer-clean-am: distclean-am maintainer-clean-generic \
-	maintainer-clean-local
+maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-generic mostlyclean-libtool
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -752,222 +818,26 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-local uninstall-man
+uninstall-am: uninstall-testmoduleLTLIBRARIES
 
-uninstall-man: uninstall-man1
+.MAKE: check-am install-am install-strip
 
-.MAKE: install-am install-strip
-
-.PHONY: all all-am all-local check check-am clean clean-generic \
-	clean-libtool clean-local cscopelist-am ctags-am dist-hook \
-	distclean distclean-generic distclean-libtool distclean-local \
-	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am install-data-local \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-man1 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
+	clean-checkLTLIBRARIES clean-generic clean-libtool \
+	clean-noinstLTLIBRARIES clean-testmoduleLTLIBRARIES \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	install-testmoduleLTLIBRARIES installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
-	maintainer-clean-local mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am uninstall-local uninstall-man uninstall-man1
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-testmoduleLTLIBRARIES
 
-
-@ENABLE_GTK_DOC_TRUE@all-local: $(HTML_BUILD_STAMP) $(PDF_BUILD_STAMP)
-@ENABLE_GTK_DOC_FALSE@all-local:
-
-docs: $(HTML_BUILD_STAMP) $(PDF_BUILD_STAMP)
-
-$(REPORT_FILES): sgml-build.stamp
-
-#### setup ####
-
-setup-build.stamp:
-	-@if test "$(abs_srcdir)" != "$(abs_builddir)" ; then \
-	    echo '  DOC   Preparing build'; \
-	    files=`echo $(SETUP_FILES) $(expand_content_files) $(DOC_MODULE).types`; \
-	    if test "x$$files" != "x" ; then \
-	        for file in $$files ; do \
-	            test -f $(abs_srcdir)/$$file && \
-	                cp -pu $(abs_srcdir)/$$file $(abs_builddir)/ || true; \
-	        done; \
-	    fi; \
-	fi
-	@touch setup-build.stamp
-
-#### scan ####
-
-scan-build.stamp: $(HFILE_GLOB) $(CFILE_GLOB)
-	@echo '  DOC   Scanning header files'
-	@_source_dir='' ; \
-	for i in $(DOC_SOURCE_DIR) ; do \
-	    _source_dir="$${_source_dir} --source-dir=$$i" ; \
-	done ; \
-	gtkdoc-scan --module=$(DOC_MODULE) --ignore-headers="$(IGNORE_HFILES)" $${_source_dir} $(SCAN_OPTIONS) $(EXTRA_HFILES)
-	@if grep -l '^..*$$' $(DOC_MODULE).types > /dev/null 2>&1 ; then \
-	    echo "  DOC   Introspecting gobjects"; \
-	    scanobj_options=""; \
-	    gtkdoc-scangobj 2>&1 --help | grep  >/dev/null "\-\-verbose"; \
-	    if test "$(?)" = "0"; then \
-	        if test "x$(V)" = "x1"; then \
-	            scanobj_options="--verbose"; \
-	        fi; \
-	    fi; \
-	    CC="$(GTKDOC_CC)" LD="$(GTKDOC_LD)" RUN="$(GTKDOC_RUN)" CFLAGS="$(GTKDOC_CFLAGS) $(CFLAGS)" LDFLAGS="$(GTKDOC_LIBS) $(LDFLAGS)" \
-	    gtkdoc-scangobj $(SCANGOBJ_OPTIONS) $$scanobj_options --module=$(DOC_MODULE); \
-	else \
-	    for i in $(SCANOBJ_FILES) ; do \
-	        test -f $$i || touch $$i ; \
-	    done \
-	fi
-	@touch scan-build.stamp
-
-$(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_MODULE)-overrides.txt: scan-build.stamp
-	@true
-
-#### xml ####
-
-sgml-build.stamp: setup-build.stamp $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_MODULE)-overrides.txt $(expand_content_files)
-	@echo '  DOC   Building XML'
-	@_source_dir='' ; \
-	for i in $(DOC_SOURCE_DIR) ; do \
-	    _source_dir="$${_source_dir} --source-dir=$$i" ; \
-	done ; \
-	gtkdoc-mkdb --module=$(DOC_MODULE) --output-format=xml --expand-content-files="$(expand_content_files)" --main-sgml-file=$(DOC_MAIN_SGML_FILE) $${_source_dir} $(MKDB_OPTIONS)
-	@touch sgml-build.stamp
-
-sgml.stamp: sgml-build.stamp
-	@true
-
-#### html ####
-
-html-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	@echo '  DOC   Building HTML'
-	@rm -rf html
-	@mkdir html
-	@mkhtml_options=""; \
-	gtkdoc-mkhtml 2>&1 --help | grep  >/dev/null "\-\-verbose"; \
-	if test "$(?)" = "0"; then \
-	  if test "x$(V)" = "x1"; then \
-	    mkhtml_options="$$mkhtml_options --verbose"; \
-	  fi; \
-	fi; \
-	gtkdoc-mkhtml 2>&1 --help | grep  >/dev/null "\-\-path"; \
-	if test "$(?)" = "0"; then \
-	  mkhtml_options="$$mkhtml_options --path=\"$(abs_srcdir)\""; \
-	fi; \
-	cd html && gtkdoc-mkhtml $$mkhtml_options $(MKHTML_OPTIONS) $(DOC_MODULE) ../$(DOC_MAIN_SGML_FILE)
-	-@test "x$(HTML_IMAGES)" = "x" || \
-	for file in $(HTML_IMAGES) ; do \
-	  if test -f $(abs_srcdir)/$$file ; then \
-	    cp $(abs_srcdir)/$$file $(abs_builddir)/html; \
-	  fi; \
-	  if test -f $(abs_builddir)/$$file ; then \
-	    cp $(abs_builddir)/$$file $(abs_builddir)/html; \
-	  fi; \
-	done;
-	@echo '  DOC   Fixing cross-references'
-	@gtkdoc-fixxref --module=$(DOC_MODULE) --module-dir=html --html-dir=$(HTML_DIR) $(FIXXREF_OPTIONS)
-	@touch html-build.stamp
-
-#### pdf ####
-
-pdf-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	@echo '  DOC   Building PDF'
-	@rm -f $(DOC_MODULE).pdf
-	@mkpdf_options=""; \
-	gtkdoc-mkpdf 2>&1 --help | grep  >/dev/null "\-\-verbose"; \
-	if test "$(?)" = "0"; then \
-	  if test "x$(V)" = "x1"; then \
-	    mkpdf_options="$$mkpdf_options --verbose"; \
-	  fi; \
-	fi; \
-	if test "x$(HTML_IMAGES)" != "x"; then \
-	  for img in $(HTML_IMAGES); do \
-	    part=`dirname $$img`; \
-	    echo $$mkpdf_options | grep >/dev/null "\-\-imgdir=$$part "; \
-	    if test $$? != 0; then \
-	      mkpdf_options="$$mkpdf_options --imgdir=$$part"; \
-	    fi; \
-	  done; \
-	fi; \
-	gtkdoc-mkpdf --path="$(abs_srcdir)" $$mkpdf_options $(DOC_MODULE) $(DOC_MAIN_SGML_FILE) $(MKPDF_OPTIONS)
-	@touch pdf-build.stamp
-
-##############
-
-clean-local:
-	@rm -f *~ *.bak
-	@rm -rf .libs
-
-distclean-local:
-	@rm -rf xml html $(REPORT_FILES) $(DOC_MODULE).pdf \
-	    $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt
-	@if test "$(abs_srcdir)" != "$(abs_builddir)" ; then \
-	    rm -f $(SETUP_FILES) $(expand_content_files) $(DOC_MODULE).types; \
-	fi
-
-maintainer-clean-local: clean
-	@rm -rf xml html
-
-install-data-local:
-	@installfiles=`echo $(builddir)/html/*`; \
-	if test "$$installfiles" = '$(builddir)/html/*'; \
-	then echo 1>&2 'Nothing to install' ; \
-	else \
-	  if test -n "$(DOC_MODULE_VERSION)"; then \
-	    installdir="$(DESTDIR)$(TARGET_DIR)-$(DOC_MODULE_VERSION)"; \
-	  else \
-	    installdir="$(DESTDIR)$(TARGET_DIR)"; \
-	  fi; \
-	  $(mkinstalldirs) $${installdir} ; \
-	  for i in $$installfiles; do \
-	    echo ' $(INSTALL_DATA) '$$i ; \
-	    $(INSTALL_DATA) $$i $${installdir}; \
-	  done; \
-	  if test -n "$(DOC_MODULE_VERSION)"; then \
-	    mv -f $${installdir}/$(DOC_MODULE).devhelp2 \
-	      $${installdir}/$(DOC_MODULE)-$(DOC_MODULE_VERSION).devhelp2; \
-	  fi; \
-	  $(GTKDOC_REBASE) --relative --dest-dir=$(DESTDIR) --html-dir=$${installdir}; \
-	fi
-
-uninstall-local:
-	@if test -n "$(DOC_MODULE_VERSION)"; then \
-	  installdir="$(DESTDIR)$(TARGET_DIR)-$(DOC_MODULE_VERSION)"; \
-	else \
-	  installdir="$(DESTDIR)$(TARGET_DIR)"; \
-	fi; \
-	rm -rf $${installdir}
-
-#
-# Require gtk-doc when making dist
-#
-@ENABLE_GTK_DOC_TRUE@dist-check-gtkdoc:
-@ENABLE_GTK_DOC_FALSE@dist-check-gtkdoc:
-@ENABLE_GTK_DOC_FALSE@	@echo "*** gtk-doc must be installed and enabled in order to make dist"
-@ENABLE_GTK_DOC_FALSE@	@false
-
-dist-hook: dist-check-gtkdoc dist-hook-local
-	@mkdir $(distdir)/html
-	@cp ./html/* $(distdir)/html
-	@-cp ./$(DOC_MODULE).pdf $(distdir)/
-	@-cp ./$(DOC_MODULE).types $(distdir)/
-	@-cp ./$(DOC_MODULE)-sections.txt $(distdir)/
-	@cd $(distdir) && rm -f $(DISTCLEANFILES)
-	@$(GTKDOC_REBASE) --online --relative --html-dir=$(distdir)/html
-
-.PHONY : dist-hook-local docs
-
-@ENABLE_MAN_TRUE@.xml.1:
-@ENABLE_MAN_TRUE@	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-
-CLEANFILES ?=
-
-dist-hook-local: all-local
-
-gobject-docs-clean: clean
-	cd $(srcdir) && rm -rf xml html
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

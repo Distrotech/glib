@@ -163,7 +163,6 @@ NROFF = nroff
 MANS = $(man_MANS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ABS_GLIB_RUNTIME_LIBDIR = @ABS_GLIB_RUNTIME_LIBDIR@
 ABS_TAPSET_DIR = @ABS_TAPSET_DIR@
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
@@ -175,11 +174,13 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+CARBON_LIBS = @CARBON_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COCOA_LIBS = @COCOA_LIBS@
 CONFIG_STATUS_DEPENDENCIES = @CONFIG_STATUS_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -210,11 +211,8 @@ GIO = @GIO@
 GIO_MODULE_DIR = @GIO_MODULE_DIR@
 GLIBC21 = @GLIBC21@
 GLIB_BINARY_AGE = @GLIB_BINARY_AGE@
-GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
-GLIB_COMPILE_SCHEMAS = @GLIB_COMPILE_SCHEMAS@
 GLIB_DEBUG_FLAGS = @GLIB_DEBUG_FLAGS@
 GLIB_EXTRA_CFLAGS = @GLIB_EXTRA_CFLAGS@
-GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GLIB_HIDDEN_VISIBILITY_CFLAGS = @GLIB_HIDDEN_VISIBILITY_CFLAGS@
 GLIB_INTERFACE_AGE = @GLIB_INTERFACE_AGE@
 GLIB_LINK_FLAGS = @GLIB_LINK_FLAGS@
@@ -414,16 +412,23 @@ DOC_MODULE = glib
 DOC_MAIN_SGML_FILE = glib-docs.xml
 
 # The directory containing the source code. Relative to $(srcdir)
-DOC_SOURCE_DIR = $(top_srcdir)/glib $(top_srcdir)/gmodule
+DOC_SOURCE_DIR = \
+    $(top_srcdir)/glib $(top_srcdir)/gmodule \
+    $(top_builddir)/glib $(top_builddir)/gmodule
+
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS = --deprecated-guards="G_DISABLE_DEPRECATED" --ignore-decorators="GLIB_VAR|G_GNUC_WARN_UNUSED_RESULT"
 
 # Extra options to supply to gtkdoc-mkdb
-MKDB_OPTIONS = --sgml-mode --output-format=xml --name-space=g
+MKDB_OPTIONS = --output-format=xml --name-space=g
 
 # Used for dependencies
-HFILE_GLOB = $(top_srcdir)/glib/*.h $(top_srcdir)/gmodule/*.h
+HFILE_GLOB = \
+    $(top_srcdir)/glib/*.h \
+    $(top_srcdir)/gmodule/*.h \
+    $(top_builddir)/glib/glibconfig.h
+
 CFILE_GLOB = $(top_srcdir)/glib/*.c $(top_srcdir)/gmodule/*.c
 
 # Ignore some private headers
@@ -455,13 +460,21 @@ IGNORE_HFILES = \
 	gvariant-serialiser.h	\
 	gvariant-core.h		\
 	gvarianttypeinfo.h	\
-	gwakeup.h
+	gwakeup.h		\
+	gtranslit-data.h	\
+	glib-init.h		\
+	gconstructor.h		\
+	valgrind.h
 
 
 # Images to copy into HTML directory
 HTML_IMAGES = \
-	file-name-encodings.png		\
-	mainloop-states.gif
+	file-name-encodings.png				\
+	mainloop-states.gif				\
+	Sorted_binary_tree_breadth-first_traversal.svg 	\
+	Sorted_binary_tree_inorder.svg 			\
+	Sorted_binary_tree_postorder.svg 		\
+	Sorted_binary_tree_preorder.svg
 
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
@@ -513,8 +526,11 @@ SETUP_FILES = \
 # Other files to distribute
 EXTRA_DIST = $(HTML_IMAGES) $(SETUP_FILES) file-name-encodings.png \
 	file-name-encodings.sxd mainloop-states.fig \
-	mainloop-states.png mainloop-states.eps version.xml.in \
-	$(man_MANS)
+	mainloop-states.png mainloop-states.eps \
+	Sorted_binary_tree_breadth-first_traversal.svg \
+	Sorted_binary_tree_inorder.svg \
+	Sorted_binary_tree_postorder.svg \
+	Sorted_binary_tree_preorder.svg version.xml.in $(man_MANS)
 DOC_STAMPS = setup-build.stamp scan-build.stamp sgml-build.stamp \
 	html-build.stamp pdf-build.stamp \
 	sgml.stamp html.stamp pdf.stamp
